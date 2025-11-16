@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HKUST Library Seat Tracker - Prototype</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <header class="header">
+            <div class="logo">
+                <h1>📚 HKUST Library</h1>
+                <p>Smart Seat Management System</p>
+            </div>
+            <div class="header-stats">
+                <div class="stat-item">
+                    <span class="stat-label">Available</span>
+                    <span class="stat-value available" id="total-available">0</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-label">Occupied</span>
+                    <span class="stat-value occupied" id="total-occupied">0</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-label">Seat Hogging</span>
+                    <span class="stat-value hogging" id="total-hogging">0</span>
+                </div>
+            </div>
+        </header>
+
+        <!-- Navigation Tabs -->
+        <nav class="tabs">
+            <button class="tab-btn active" data-tab="dashboard">
+                <span>📍</span> Seat Dashboard
+            </button>
+            <button class="tab-btn" data-tab="camera">
+                <span>📹</span> CV Detection
+            </button>
+            <button class="tab-btn" data-tab="analytics">
+                <span>📊</span> Analytics
+            </button>
+        </nav>
+
+        <!-- Dashboard Tab -->
+        <div class="tab-content active" id="dashboard">
+            <div class="dashboard-header">
+                <h2>Real-Time Seat Status</h2>
+                <div class="filter-controls">
+                    <select id="floor-filter">
+                        <option value="all">All Floors</option>
+                        <option value="G">Ground Floor</option>
+                        <option value="1">1st Floor</option>
+                        <option value="2">2nd Floor</option>
+                        <option value="3">3rd Floor</option>
+                    </select>
+                    <select id="zone-filter">
+                        <option value="all">All Zones</option>
+                        <option value="quiet">Quiet Zone</option>
+                        <option value="group">Group Study</option>
+                        <option value="computer">Computer Area</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="seat-grid" id="seat-grid">
+                <!-- Seats will be dynamically generated -->
+            </div>
+
+            <div class="legend">
+                <div class="legend-item">
+                    <span class="legend-color available"></span>
+                    <span>Available</span>
+                </div>
+                <div class="legend-item">
+                    <span class="legend-color occupied"></span>
+                    <span>Occupied</span>
+                </div>
+                <div class="legend-item">
+                    <span class="legend-color hogging"></span>
+                    <span>Seat Hogging Detected</span>
+                </div>
+                <div class="legend-item">
+                    <span class="legend-color reserved"></span>
+                    <span>Reserved</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Camera Detection Tab -->
+        <div class="tab-content" id="camera">
+            <div class="camera-container">
+                <div class="camera-header">
+                    <h2>Computer Vision Seat Monitoring</h2>
+                    <div class="camera-controls">
+                        <button class="btn btn-primary" id="toggle-camera">Start Detection</button>
+                        <span class="status-indicator" id="camera-status">
+                            <span class="status-dot"></span>
+                            <span>Camera Offline</span>
+                        </span>
+                    </div>
+                </div>
+
+                <div class="camera-feed-container">
+                    <div class="camera-feed" id="camera-feed">
+                        <div class="camera-placeholder">
+                            <div class="camera-icon">📹</div>
+                            <p>Camera Feed</p>
+                            <p class="camera-subtitle">Click "Start Detection" to begin monitoring</p>
+                        </div>
+                    </div>
+                    <div class="detection-overlay" id="detection-overlay">
+                        <!-- Detection boxes will be drawn here -->
+                    </div>
+                </div>
+
+                <div class="detection-panel">
+                    <h3>Detection Results</h3>
+                    <div class="detection-list" id="detection-list">
+                        <div class="detection-item">
+                            <div class="detection-icon">👤</div>
+                            <div class="detection-info">
+                                <div class="detection-title">Seat A-12</div>
+                                <div class="detection-details">Person detected - No activity for 15+ min</div>
+                                <div class="detection-time">Last seen: 2 minutes ago</div>
+                            </div>
+                            <div class="detection-status hogging">⚠️ Seat Hogging</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="cv-stats">
+                    <div class="cv-stat-card">
+                        <div class="cv-stat-icon">👁️</div>
+                        <div class="cv-stat-content">
+                            <div class="cv-stat-value" id="cv-detections">0</div>
+                            <div class="cv-stat-label">Active Detections</div>
+                        </div>
+                    </div>
+                    <div class="cv-stat-card">
+                        <div class="cv-stat-icon">⏱️</div>
+                        <div class="cv-stat-content">
+                            <div class="cv-stat-value" id="cv-avg-time">0m</div>
+                            <div class="cv-stat-label">Avg. Detection Time</div>
+                        </div>
+                    </div>
+                    <div class="cv-stat-card">
+                        <div class="cv-stat-icon">🎯</div>
+                        <div class="cv-stat-content">
+                            <div class="cv-stat-value" id="cv-accuracy">98.5%</div>
+                            <div class="cv-stat-label">Detection Accuracy</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Analytics Tab -->
+        <div class="tab-content" id="analytics">
+            <div class="analytics-container">
+                <h2>Seat Usage Analytics</h2>
+                
+                <div class="charts-grid">
+                    <div class="chart-card">
+                        <h3>Occupancy Rate (24h)</h3>
+                        <canvas id="occupancy-chart"></canvas>
+                    </div>
+                    <div class="chart-card">
+                        <h3>Seat Status Distribution</h3>
+                        <canvas id="distribution-chart"></canvas>
+                    </div>
+                    <div class="chart-card">
+                        <h3>Peak Hours Analysis</h3>
+                        <canvas id="peak-hours-chart"></canvas>
+                    </div>
+                    <div class="chart-card">
+                        <h3>Seat Hogging Incidents</h3>
+                        <canvas id="hogging-trend-chart"></canvas>
+                    </div>
+                </div>
+
+                <div class="analytics-summary">
+                    <div class="summary-card">
+                        <h4>Today's Summary</h4>
+                        <div class="summary-stats">
+                            <div class="summary-stat">
+                                <span class="summary-value">1,247</span>
+                                <span class="summary-label">Total Seats Checked</span>
+                            </div>
+                            <div class="summary-stat">
+                                <span class="summary-value">23</span>
+                                <span class="summary-label">Hogging Incidents</span>
+                            </div>
+                            <div class="summary-stat">
+                                <span class="summary-value">87%</span>
+                                <span class="summary-label">Avg. Occupancy</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="app.js"></script>
+</body>
+</html>
+
