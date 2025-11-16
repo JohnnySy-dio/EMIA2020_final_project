@@ -2,112 +2,341 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>HKUST Library Seat Tracker - Prototype</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <title>HKUST Library Seat Tracker</title>
     <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-    <div class="container">
-        <!-- Header -->
-        <header class="header">
-            <div class="logo">
-                <h1>📚 HKUST Library</h1>
-                <p>Smart Seat Management System</p>
+    <div class="mobile-app">
+        <!-- Status Bar (iOS style) -->
+        <div class="status-bar">
+            <span class="time" id="current-time">9:41</span>
+            <div class="status-icons">
+                <span class="signal">📶</span>
+                <span class="wifi">📶</span>
+                <span class="battery">🔋</span>
             </div>
-            <div class="header-stats">
-                <div class="stat-item">
-                    <span class="stat-label">Available</span>
-                    <span class="stat-value available" id="total-available">0</span>
+        </div>
+
+        <!-- Header -->
+        <header class="app-header">
+            <div class="header-content">
+                <div class="logo-section">
+                    <h1>📚 HKUST Library</h1>
+                    <p class="subtitle">Seat Tracker</p>
                 </div>
-                <div class="stat-item">
-                    <span class="stat-label">Occupied</span>
-                    <span class="stat-value occupied" id="total-occupied">0</span>
+                <button class="menu-btn" id="menu-btn">☰</button>
+            </div>
+            <div class="quick-stats">
+                <div class="quick-stat">
+                    <span class="quick-stat-value available" id="total-available">0</span>
+                    <span class="quick-stat-label">Available</span>
                 </div>
-                <div class="stat-item">
-                    <span class="stat-label">Seat Hogging</span>
-                    <span class="stat-value hogging" id="total-hogging">0</span>
+                <div class="quick-stat">
+                    <span class="quick-stat-value occupied" id="total-occupied">0</span>
+                    <span class="quick-stat-label">Occupied</span>
+                </div>
+                <div class="quick-stat">
+                    <span class="quick-stat-value hogging" id="total-hogging">0</span>
+                    <span class="quick-stat-label">Hogging</span>
                 </div>
             </div>
         </header>
 
-        <!-- Navigation Tabs -->
-        <nav class="tabs">
-            <button class="tab-btn active" data-tab="dashboard">
-                <span>📍</span> Seat Dashboard
-            </button>
-            <button class="tab-btn" data-tab="camera">
-                <span>📹</span> CV Detection
-            </button>
-            <button class="tab-btn" data-tab="analytics">
-                <span>📊</span> Analytics
-            </button>
-        </nav>
-
-        <!-- Dashboard Tab -->
-        <div class="tab-content active" id="dashboard">
-            <div class="dashboard-header">
-                <h2>Real-Time Seat Status</h2>
-                <div class="filter-controls">
-                    <select id="floor-filter">
-                        <option value="all">All Floors</option>
-                        <option value="G">Ground Floor</option>
-                        <option value="1">1st Floor</option>
-                        <option value="2">2nd Floor</option>
-                        <option value="3">3rd Floor</option>
-                    </select>
-                    <select id="zone-filter">
-                        <option value="all">All Zones</option>
-                        <option value="quiet">Quiet Zone</option>
-                        <option value="group">Group Study</option>
-                        <option value="computer">Computer Area</option>
-                    </select>
+        <!-- Main Content Area -->
+        <main class="app-content">
+            <!-- Dashboard Tab -->
+            <div class="tab-content active" id="dashboard">
+                <div class="page-header">
+                    <h2>Seat Status</h2>
+                    <div class="filter-chips">
+                        <select id="floor-filter" class="filter-chip" aria-label="Filter by floor">
+                            <option value="all">All Floors</option>
+                            <option value="G">Ground</option>
+                            <option value="1">1F</option>
+                            <option value="2">2F</option>
+                            <option value="3">3F</option>
+                        </select>
+                        <select id="zone-filter" class="filter-chip" aria-label="Filter by zone">
+                            <option value="all">All Zones</option>
+                            <option value="quiet">Quiet</option>
+                            <option value="group">Group</option>
+                            <option value="computer">Computer</option>
+                        </select>
+                    </div>
                 </div>
-            </div>
 
             <div class="seat-grid" id="seat-grid">
                 <!-- Seats will be dynamically generated -->
             </div>
 
-            <div class="legend">
-                <div class="legend-item">
-                    <span class="legend-color available"></span>
-                    <span>Available</span>
-                </div>
-                <div class="legend-item">
-                    <span class="legend-color occupied"></span>
-                    <span>Occupied</span>
-                </div>
-                <div class="legend-item">
-                    <span class="legend-color hogging"></span>
-                    <span>Seat Hogging Detected</span>
-                </div>
-                <div class="legend-item">
-                    <span class="legend-color reserved"></span>
-                    <span>Reserved</span>
-                </div>
-            </div>
-        </div>
-
-        <!-- Camera Detection Tab -->
-        <div class="tab-content" id="camera">
-            <div class="camera-container">
-                <div class="camera-header">
-                    <h2>Computer Vision Seat Monitoring</h2>
-                    <div class="camera-controls">
-                        <button class="btn btn-primary" id="toggle-camera">Start Detection</button>
-                        <span class="status-indicator" id="camera-status">
-                            <span class="status-dot"></span>
-                            <span>Camera Offline</span>
-                        </span>
+                <div class="legend-mobile">
+                    <div class="legend-item">
+                        <span class="legend-color available"></span>
+                        <span>Available</span>
+                    </div>
+                    <div class="legend-item">
+                        <span class="legend-color occupied"></span>
+                        <span>Occupied</span>
+                    </div>
+                    <div class="legend-item">
+                        <span class="legend-color hogging"></span>
+                        <span>Hogging</span>
+                    </div>
+                    <div class="legend-item">
+                        <span class="legend-color reserved"></span>
+                        <span>Reserved</span>
                     </div>
                 </div>
+            </div>
+
+            <!-- Camera Detection Tab -->
+            <div class="tab-content" id="camera">
+                <div class="page-header">
+                    <h2>CV Detection</h2>
+                </div>
+                <div class="camera-container">
+                    <div class="camera-controls-mobile">
+                        <button class="btn-mobile btn-primary-mobile" id="toggle-camera">
+                            <span class="btn-icon">📹</span>
+                            <span class="btn-text">Start Detection</span>
+                        </button>
+                        <div class="status-indicator-mobile" id="camera-status">
+                            <span class="status-dot"></span>
+                            <span>Offline</span>
+                        </div>
+                    </div>
 
                 <div class="camera-feed-container">
                     <div class="camera-feed" id="camera-feed">
-                        <div class="camera-placeholder">
+                        <div class="camera-placeholder" id="camera-placeholder">
                             <div class="camera-icon">📹</div>
                             <p>Camera Feed</p>
                             <p class="camera-subtitle">Click "Start Detection" to begin monitoring</p>
+                        </div>
+                        <div class="camera-cartoon" id="camera-cartoon">
+                            <div class="library-scene">
+                                <!-- Library Background -->
+                                <div class="library-bg">
+                                    <div class="bookshelf"></div>
+                                    <div class="bookshelf"></div>
+                                </div>
+                                
+                                <!-- Seats and Characters -->
+                                <div class="seats-container">
+                                    <!-- Seat 1: Normal Use - Studying Hard -->
+                                    <div class="seat-demo seat-normal" data-seat="1">
+                                        <div class="seat-chair"></div>
+                                        <div class="desk-table"></div>
+                                        <div class="person-character person-studying">
+                                            <div class="person-head">
+                                                <div class="face">
+                                                    <div class="eye"></div>
+                                                    <div class="eye"></div>
+                                                    <div class="mouth"></div>
+                                                </div>
+                                            </div>
+                                            <div class="person-body"></div>
+                                            <div class="person-arms">
+                                                <div class="arm left writing-arm">
+                                                    <div class="hand writing-hand"></div>
+                                                </div>
+                                                <div class="arm right"></div>
+                                            </div>
+                                        </div>
+                                        <div class="study-items">
+                                            <div class="study-item book-open"></div>
+                                            <div class="study-item pen"></div>
+                                        </div>
+                                        <div class="detection-badge normal">
+                                            <span>✓</span>
+                                        </div>
+                                    </div>
+                                    
+                                    <!-- Seat 2: Seat Hogging - Items Left, No Person -->
+                                    <div class="seat-demo seat-hogging" data-seat="2">
+                                        <div class="seat-chair"></div>
+                                        <div class="desk-table"></div>
+                                        <div class="left-items">
+                                            <div class="item book"></div>
+                                            <div class="item bag"></div>
+                                            <div class="item water-bottle"></div>
+                                        </div>
+                                        <div class="detection-badge hogging">
+                                            <span>⚠️</span>
+                                        </div>
+                                        <div class="scan-beam"></div>
+                                    </div>
+                                    
+                                    <!-- Seat 3: Normal Use - Studying Hard -->
+                                    <div class="seat-demo seat-normal" data-seat="3">
+                                        <div class="seat-chair"></div>
+                                        <div class="desk-table"></div>
+                                        <div class="person-character person-studying">
+                                            <div class="person-head">
+                                                <div class="face">
+                                                    <div class="eye"></div>
+                                                    <div class="eye"></div>
+                                                    <div class="mouth"></div>
+                                                </div>
+                                            </div>
+                                            <div class="person-body"></div>
+                                            <div class="person-arms">
+                                                <div class="arm left reading-arm">
+                                                    <div class="hand reading-hand"></div>
+                                                </div>
+                                                <div class="arm right"></div>
+                                            </div>
+                                        </div>
+                                        <div class="study-items">
+                                            <div class="study-item book-reading"></div>
+                                            <div class="study-item notebook"></div>
+                                        </div>
+                                        <div class="detection-badge normal">
+                                            <span>✓</span>
+                                        </div>
+                                    </div>
+                                    
+                                    <!-- Seat 4: Seat Hogging - Items Left, No Person -->
+                                    <div class="seat-demo seat-hogging" data-seat="4">
+                                        <div class="seat-chair"></div>
+                                        <div class="desk-table"></div>
+                                        <div class="left-items">
+                                            <div class="item laptop"></div>
+                                            <div class="item notebook"></div>
+                                            <div class="item coffee-cup"></div>
+                                        </div>
+                                        <div class="detection-badge hogging">
+                                            <span>⚠️</span>
+                                        </div>
+                                        <div class="scan-beam"></div>
+                                    </div>
+                                    
+                                    <!-- Seat 5: Normal Use - Studying Hard -->
+                                    <div class="seat-demo seat-normal" data-seat="5">
+                                        <div class="seat-chair"></div>
+                                        <div class="desk-table"></div>
+                                        <div class="person-character person-studying">
+                                            <div class="person-head">
+                                                <div class="face">
+                                                    <div class="eye"></div>
+                                                    <div class="eye"></div>
+                                                    <div class="mouth"></div>
+                                                </div>
+                                            </div>
+                                            <div class="person-body"></div>
+                                            <div class="person-arms">
+                                                <div class="arm left writing-arm">
+                                                    <div class="hand writing-hand"></div>
+                                                </div>
+                                                <div class="arm right"></div>
+                                            </div>
+                                        </div>
+                                        <div class="study-items">
+                                            <div class="study-item book-open"></div>
+                                            <div class="study-item pen"></div>
+                                        </div>
+                                        <div class="detection-badge normal">
+                                            <span>✓</span>
+                                        </div>
+                                    </div>
+                                    
+                                    <!-- Seat 6: Seat Hogging - Items Left, No Person -->
+                                    <div class="seat-demo seat-hogging" data-seat="6">
+                                        <div class="seat-chair"></div>
+                                        <div class="desk-table"></div>
+                                        <div class="left-items">
+                                            <div class="item book"></div>
+                                            <div class="item bag"></div>
+                                        </div>
+                                        <div class="detection-badge hogging">
+                                            <span>⚠️</span>
+                                        </div>
+                                        <div class="scan-beam"></div>
+                                    </div>
+                                    
+                                    <!-- Seat 7: Normal Use - Studying Hard -->
+                                    <div class="seat-demo seat-normal" data-seat="7">
+                                        <div class="seat-chair"></div>
+                                        <div class="desk-table"></div>
+                                        <div class="person-character person-studying">
+                                            <div class="person-head">
+                                                <div class="face">
+                                                    <div class="eye"></div>
+                                                    <div class="eye"></div>
+                                                    <div class="mouth"></div>
+                                                </div>
+                                            </div>
+                                            <div class="person-body"></div>
+                                            <div class="person-arms">
+                                                <div class="arm left reading-arm">
+                                                    <div class="hand reading-hand"></div>
+                                                </div>
+                                                <div class="arm right"></div>
+                                            </div>
+                                        </div>
+                                        <div class="study-items">
+                                            <div class="study-item book-reading"></div>
+                                            <div class="study-item notebook"></div>
+                                        </div>
+                                        <div class="detection-badge normal">
+                                            <span>✓</span>
+                                        </div>
+                                    </div>
+                                    
+                                    <!-- Seat 8: Normal Use - Studying Hard -->
+                                    <div class="seat-demo seat-normal" data-seat="8">
+                                        <div class="seat-chair"></div>
+                                        <div class="desk-table"></div>
+                                        <div class="person-character person-studying">
+                                            <div class="person-head">
+                                                <div class="face">
+                                                    <div class="eye"></div>
+                                                    <div class="eye"></div>
+                                                    <div class="mouth"></div>
+                                                </div>
+                                            </div>
+                                            <div class="person-body"></div>
+                                            <div class="person-arms">
+                                                <div class="arm left writing-arm">
+                                                    <div class="hand writing-hand"></div>
+                                                </div>
+                                                <div class="arm right"></div>
+                                            </div>
+                                        </div>
+                                        <div class="study-items">
+                                            <div class="study-item book-open"></div>
+                                            <div class="study-item pen"></div>
+                                        </div>
+                                        <div class="detection-badge normal">
+                                            <span>✓</span>
+                                        </div>
+                                    </div>
+                                    
+                                    <!-- Seat 9: Seat Hogging - Items Left, No Person -->
+                                    <div class="seat-demo seat-hogging" data-seat="9">
+                                        <div class="seat-chair"></div>
+                                        <div class="desk-table"></div>
+                                        <div class="left-items">
+                                            <div class="item laptop"></div>
+                                            <div class="item water-bottle"></div>
+                                            <div class="item coffee-cup"></div>
+                                        </div>
+                                        <div class="detection-badge hogging">
+                                            <span>⚠️</span>
+                                        </div>
+                                        <div class="scan-beam"></div>
+                                    </div>
+                                </div>
+                                
+                                <!-- Detection Indicators -->
+                                <div class="detection-indicators">
+                                    <div class="indicator scanning"></div>
+                                    <div class="indicator scanning"></div>
+                                </div>
+                            </div>
                         </div>
                     </div>
                     <div class="detection-overlay" id="detection-overlay">
@@ -130,77 +359,91 @@
                     </div>
                 </div>
 
-                <div class="cv-stats">
-                    <div class="cv-stat-card">
-                        <div class="cv-stat-icon">👁️</div>
-                        <div class="cv-stat-content">
-                            <div class="cv-stat-value" id="cv-detections">0</div>
-                            <div class="cv-stat-label">Active Detections</div>
+                    <div class="cv-stats-mobile">
+                        <div class="cv-stat-card-mobile">
+                            <div class="cv-stat-icon">👁️</div>
+                            <div class="cv-stat-content">
+                                <div class="cv-stat-value" id="cv-detections">0</div>
+                                <div class="cv-stat-label">Detections</div>
+                            </div>
                         </div>
-                    </div>
-                    <div class="cv-stat-card">
-                        <div class="cv-stat-icon">⏱️</div>
-                        <div class="cv-stat-content">
-                            <div class="cv-stat-value" id="cv-avg-time">0m</div>
-                            <div class="cv-stat-label">Avg. Detection Time</div>
+                        <div class="cv-stat-card-mobile">
+                            <div class="cv-stat-icon">⏱️</div>
+                            <div class="cv-stat-content">
+                                <div class="cv-stat-value" id="cv-avg-time">0m</div>
+                                <div class="cv-stat-label">Avg. Time</div>
+                            </div>
                         </div>
-                    </div>
-                    <div class="cv-stat-card">
-                        <div class="cv-stat-icon">🎯</div>
-                        <div class="cv-stat-content">
-                            <div class="cv-stat-value" id="cv-accuracy">98.5%</div>
-                            <div class="cv-stat-label">Detection Accuracy</div>
+                        <div class="cv-stat-card-mobile">
+                            <div class="cv-stat-icon">🎯</div>
+                            <div class="cv-stat-content">
+                                <div class="cv-stat-value" id="cv-accuracy">98.5%</div>
+                                <div class="cv-stat-label">Accuracy</div>
+                            </div>
                         </div>
                     </div>
                 </div>
             </div>
-        </div>
 
-        <!-- Analytics Tab -->
-        <div class="tab-content" id="analytics">
-            <div class="analytics-container">
-                <h2>Seat Usage Analytics</h2>
-                
-                <div class="charts-grid">
-                    <div class="chart-card">
-                        <h3>Occupancy Rate (24h)</h3>
+            <!-- Analytics Tab -->
+            <div class="tab-content" id="analytics">
+                <div class="page-header">
+                    <h2>Analytics</h2>
+                </div>
+                <div class="analytics-container-mobile">
+                    <div class="chart-card-mobile">
+                        <h3>Occupancy (24h)</h3>
                         <canvas id="occupancy-chart"></canvas>
                     </div>
-                    <div class="chart-card">
-                        <h3>Seat Status Distribution</h3>
+                    <div class="chart-card-mobile">
+                        <h3>Status Distribution</h3>
                         <canvas id="distribution-chart"></canvas>
                     </div>
-                    <div class="chart-card">
-                        <h3>Peak Hours Analysis</h3>
+                    <div class="chart-card-mobile">
+                        <h3>Peak Hours</h3>
                         <canvas id="peak-hours-chart"></canvas>
                     </div>
-                    <div class="chart-card">
-                        <h3>Seat Hogging Incidents</h3>
+                    <div class="chart-card-mobile">
+                        <h3>Hogging Trend</h3>
                         <canvas id="hogging-trend-chart"></canvas>
                     </div>
-                </div>
 
-                <div class="analytics-summary">
-                    <div class="summary-card">
+                    <div class="summary-card-mobile">
                         <h4>Today's Summary</h4>
-                        <div class="summary-stats">
-                            <div class="summary-stat">
+                        <div class="summary-stats-mobile">
+                            <div class="summary-stat-mobile">
                                 <span class="summary-value">1,247</span>
-                                <span class="summary-label">Total Seats Checked</span>
+                                <span class="summary-label">Seats Checked</span>
                             </div>
-                            <div class="summary-stat">
+                            <div class="summary-stat-mobile">
                                 <span class="summary-value">23</span>
-                                <span class="summary-label">Hogging Incidents</span>
+                                <span class="summary-label">Hogging</span>
                             </div>
-                            <div class="summary-stat">
+                            <div class="summary-stat-mobile">
                                 <span class="summary-value">87%</span>
-                                <span class="summary-label">Avg. Occupancy</span>
+                                <span class="summary-label">Occupancy</span>
                             </div>
                         </div>
                     </div>
                 </div>
             </div>
-        </div>
+        </main>
+
+        <!-- Bottom Navigation Bar -->
+        <nav class="bottom-nav">
+            <button class="nav-item active" data-tab="dashboard">
+                <span class="nav-icon">📍</span>
+                <span class="nav-label">Seats</span>
+            </button>
+            <button class="nav-item" data-tab="camera">
+                <span class="nav-icon">📹</span>
+                <span class="nav-label">Detection</span>
+            </button>
+            <button class="nav-item" data-tab="analytics">
+                <span class="nav-icon">📊</span>
+                <span class="nav-label">Analytics</span>
+            </button>
+        </nav>
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>

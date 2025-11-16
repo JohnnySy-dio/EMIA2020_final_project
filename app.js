@@ -46,8 +46,8 @@ function initializeSeats() {
 
 // Setup event listeners
 function setupEventListeners() {
-    // Tab switching
-    document.querySelectorAll('.tab-btn').forEach(btn => {
+    // Tab switching (bottom navigation)
+    document.querySelectorAll('.nav-item').forEach(btn => {
         btn.addEventListener('click', () => {
             const tabName = btn.dataset.tab;
             switchTab(tabName);
@@ -60,13 +60,17 @@ function setupEventListeners() {
 
     // Camera toggle
     document.getElementById('toggle-camera').addEventListener('click', toggleCamera);
+    
+    // Update time in status bar
+    updateTime();
+    setInterval(updateTime, 60000); // Update every minute
 }
 
 // Tab switching
 function switchTab(tabName) {
-    // Update buttons
-    document.querySelectorAll('.tab-btn').forEach(btn => {
-        btn.classList.toggle('active', btn.dataset.tab === tabName);
+    // Update navigation items
+    document.querySelectorAll('.nav-item').forEach(item => {
+        item.classList.toggle('active', item.dataset.tab === tabName);
     });
 
     // Update content
@@ -77,6 +81,18 @@ function switchTab(tabName) {
     // Initialize charts when analytics tab is opened
     if (tabName === 'analytics') {
         setTimeout(initializeCharts, 100);
+    }
+}
+
+// Update time in status bar
+function updateTime() {
+    const now = new Date();
+    const hours = now.getHours();
+    const minutes = now.getMinutes();
+    const timeString = `${hours}:${minutes.toString().padStart(2, '0')}`;
+    const timeElement = document.getElementById('current-time');
+    if (timeElement) {
+        timeElement.textContent = timeString;
     }
 }
 
@@ -190,21 +206,27 @@ function toggleCamera() {
     const overlay = document.getElementById('detection-overlay');
 
     if (cameraActive) {
-        btn.textContent = 'Stop Detection';
+        const btnText = btn.querySelector('.btn-text');
+        if (btnText) btnText.textContent = 'Stop Detection';
         btn.classList.add('active');
         status.classList.add('active');
-        status.querySelector('span:last-child').textContent = 'Camera Online';
+        const statusText = status.querySelector('span:last-child');
+        if (statusText) statusText.textContent = 'Online';
         feed.classList.add('active');
         
+        // Cartoon will show automatically via CSS when .camera-feed.active is applied
         startCameraDetection();
     } else {
-        btn.textContent = 'Start Detection';
+        const btnText = btn.querySelector('.btn-text');
+        if (btnText) btnText.textContent = 'Start Detection';
         btn.classList.remove('active');
         status.classList.remove('active');
-        status.querySelector('span:last-child').textContent = 'Camera Offline';
+        const statusText = status.querySelector('span:last-child');
+        if (statusText) statusText.textContent = 'Offline';
         feed.classList.remove('active');
         overlay.innerHTML = '';
         
+        // Cartoon will hide automatically via CSS when .camera-feed.active is removed
         stopCameraDetection();
     }
 }
