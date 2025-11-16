@@ -61,6 +61,9 @@ function setupEventListeners() {
     // Camera toggle
     document.getElementById('toggle-camera').addEventListener('click', toggleCamera);
     
+    // Fullscreen toggle
+    document.getElementById('fullscreen-btn').addEventListener('click', toggleFullscreen);
+    
     // Update time in status bar
     updateTime();
     setInterval(updateTime, 60000); // Update every minute
@@ -239,36 +242,9 @@ function startCameraDetection() {
     overlay.innerHTML = '';
     detectionList.innerHTML = '';
 
-    // Simulate detection boxes on camera feed
+    // Update detection list and stats periodically
+    // No need for moving boxes since we have cartoon characters showing the seats
     detectionInterval = setInterval(() => {
-        overlay.innerHTML = '';
-        
-        // Get some hogging seats to display
-        const hoggingSeats = seats.filter(s => s.status === 'hogging').slice(0, 3);
-        
-        hoggingSeats.forEach((seat, index) => {
-            const box = document.createElement('div');
-            box.className = `detection-box ${seat.status}`;
-            
-            // Random position on camera feed
-            const left = 10 + Math.random() * 60;
-            const top = 10 + Math.random() * 60;
-            const width = 15 + Math.random() * 20;
-            const height = 15 + Math.random() * 20;
-            
-            box.style.left = `${left}%`;
-            box.style.top = `${top}%`;
-            box.style.width = `${width}%`;
-            box.style.height = `${height}%`;
-            
-            const label = document.createElement('div');
-            label.className = 'detection-label';
-            label.textContent = `${seat.id} - ${seat.occupiedTime}m idle`;
-            box.appendChild(label);
-            
-            overlay.appendChild(box);
-        });
-
         // Update detection list
         updateDetectionList();
         updateCVStats();
@@ -459,6 +435,63 @@ function initializeCharts() {
                 }
             }
         });
+    }
+}
+
+// Fullscreen functionality
+function toggleFullscreen() {
+    const container = document.getElementById('camera-feed-container');
+    const btn = document.getElementById('fullscreen-btn');
+    const icon = btn.querySelector('.fullscreen-icon');
+    
+    if (!document.fullscreenElement && !document.webkitFullscreenElement && 
+        !document.mozFullScreenElement && !document.msFullscreenElement) {
+        // Enter fullscreen
+        if (container.requestFullscreen) {
+            container.requestFullscreen();
+        } else if (container.webkitRequestFullscreen) {
+            container.webkitRequestFullscreen();
+        } else if (container.mozRequestFullScreen) {
+            container.mozRequestFullScreen();
+        } else if (container.msRequestFullscreen) {
+            container.msRequestFullscreen();
+        }
+        container.classList.add('fullscreen');
+        icon.textContent = '⛶';
+    } else {
+        // Exit fullscreen
+        if (document.exitFullscreen) {
+            document.exitFullscreen();
+        } else if (document.webkitExitFullscreen) {
+            document.webkitExitFullscreen();
+        } else if (document.mozCancelFullScreen) {
+            document.mozCancelFullScreen();
+        } else if (document.msExitFullscreen) {
+            document.msExitFullscreen();
+        }
+        container.classList.remove('fullscreen');
+        icon.textContent = '⛶';
+    }
+}
+
+// Handle fullscreen change events
+document.addEventListener('fullscreenchange', handleFullscreenChange);
+document.addEventListener('webkitfullscreenchange', handleFullscreenChange);
+document.addEventListener('mozfullscreenchange', handleFullscreenChange);
+document.addEventListener('MSFullscreenChange', handleFullscreenChange);
+
+function handleFullscreenChange() {
+    const container = document.getElementById('camera-feed-container');
+    const btn = document.getElementById('fullscreen-btn');
+    const icon = btn.querySelector('.fullscreen-icon');
+    
+    if (document.fullscreenElement || document.webkitFullscreenElement || 
+        document.mozFullScreenElement || document.msFullscreenElement) {
+        container.classList.add('fullscreen');
+        icon.textContent = '⛶';
+    } else {
+        container.classList.remove('fullscreen');
+        icon.textContent = '⛶';
     }
 }
 
