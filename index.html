@@ -2,51 +2,54 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <title>HKUST Library Seat Tracker</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HKUST Library Seat Tracker - Design Thinking Prototype</title>
     <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-    <div class="mobile-app">
-        <!-- Status Bar (iOS style) -->
-        <div class="status-bar">
-            <span class="time" id="current-time">9:41</span>
-            <div class="status-icons">
-                <span class="signal">📶</span>
-                <span class="wifi">📶</span>
-                <span class="battery">🔋</span>
-            </div>
-        </div>
-
+    <div class="desktop-app">
         <!-- Header -->
-        <header class="app-header">
-            <div class="header-content">
+        <header class="desktop-header">
+            <div class="header-left">
                 <div class="logo-section">
                     <h1>📚 HKUST Library</h1>
-                    <p class="subtitle">Seat Tracker</p>
+                    <p class="subtitle">Smart Seat Management System</p>
                 </div>
-                <button class="menu-btn" id="menu-btn">☰</button>
             </div>
-            <div class="quick-stats">
-                <div class="quick-stat">
-                    <span class="quick-stat-value available" id="total-available">0</span>
-                    <span class="quick-stat-label">Available</span>
+            <div class="header-stats">
+                <div class="stat-item">
+                    <span class="stat-label">Available</span>
+                    <span class="stat-value available" id="total-available">0</span>
                 </div>
-                <div class="quick-stat">
-                    <span class="quick-stat-value occupied" id="total-occupied">0</span>
-                    <span class="quick-stat-label">Occupied</span>
+                <div class="stat-item">
+                    <span class="stat-label">Occupied</span>
+                    <span class="stat-value occupied" id="total-occupied">0</span>
                 </div>
-                <div class="quick-stat">
-                    <span class="quick-stat-value hogging" id="total-hogging">0</span>
-                    <span class="quick-stat-label">Hogging</span>
+                <div class="stat-item">
+                    <span class="stat-label">Seat Hogging</span>
+                    <span class="stat-value hogging" id="total-hogging">0</span>
                 </div>
             </div>
         </header>
 
+        <!-- Top Navigation -->
+        <nav class="top-nav">
+            <button class="nav-btn active" data-tab="dashboard">
+                <span class="nav-icon">📍</span>
+                <span class="nav-text">Seat Dashboard</span>
+            </button>
+            <button class="nav-btn" data-tab="camera">
+                <span class="nav-icon">📹</span>
+                <span class="nav-text">CV Detection</span>
+            </button>
+            <button class="nav-btn" data-tab="analytics">
+                <span class="nav-icon">📊</span>
+                <span class="nav-text">Analytics</span>
+            </button>
+        </nav>
+
         <!-- Main Content Area -->
-        <main class="app-content">
+        <main class="desktop-content">
             <!-- Dashboard Tab -->
             <div class="tab-content active" id="dashboard">
                 <div class="page-header">
@@ -431,22 +434,6 @@
                 </div>
             </div>
         </main>
-
-        <!-- Bottom Navigation Bar -->
-        <nav class="bottom-nav">
-            <button class="nav-item active" data-tab="dashboard">
-                <span class="nav-icon">📍</span>
-                <span class="nav-label">Seats</span>
-            </button>
-            <button class="nav-item" data-tab="camera">
-                <span class="nav-icon">📹</span>
-                <span class="nav-label">Detection</span>
-            </button>
-            <button class="nav-item" data-tab="analytics">
-                <span class="nav-icon">📊</span>
-                <span class="nav-label">Analytics</span>
-            </button>
-        </nav>
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>

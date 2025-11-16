@@ -46,8 +46,8 @@ function initializeSeats() {
 
 // Setup event listeners
 function setupEventListeners() {
-    // Tab switching (bottom navigation)
-    document.querySelectorAll('.nav-item').forEach(btn => {
+    // Tab switching (top navigation)
+    document.querySelectorAll('.nav-btn').forEach(btn => {
         btn.addEventListener('click', () => {
             const tabName = btn.dataset.tab;
             switchTab(tabName);
@@ -63,17 +63,13 @@ function setupEventListeners() {
     
     // Fullscreen toggle
     document.getElementById('fullscreen-btn').addEventListener('click', toggleFullscreen);
-    
-    // Update time in status bar
-    updateTime();
-    setInterval(updateTime, 60000); // Update every minute
 }
 
 // Tab switching
 function switchTab(tabName) {
-    // Update navigation items
-    document.querySelectorAll('.nav-item').forEach(item => {
-        item.classList.toggle('active', item.dataset.tab === tabName);
+    // Update navigation buttons
+    document.querySelectorAll('.nav-btn').forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.tab === tabName);
     });
 
     // Update content
@@ -84,18 +80,6 @@ function switchTab(tabName) {
     // Initialize charts when analytics tab is opened
     if (tabName === 'analytics') {
         setTimeout(initializeCharts, 100);
-    }
-}
-
-// Update time in status bar
-function updateTime() {
-    const now = new Date();
-    const hours = now.getHours();
-    const minutes = now.getMinutes();
-    const timeString = `${hours}:${minutes.toString().padStart(2, '0')}`;
-    const timeElement = document.getElementById('current-time');
-    if (timeElement) {
-        timeElement.textContent = timeString;
     }
 }
 
