@@ -39,12 +39,12 @@ This is a design thinking project prototype that addresses the seating space sho
 - A modern web browser (Chrome, Firefox, Safari, Edge)
 - No additional installation required - runs entirely in the browser
 
-### Running the Prototype
+### Running Locally
 
 1. **Clone or download** this repository
 2. **Open `index.html`** in your web browser
    - You can simply double-click the file, or
-   - Use a local web server (optional but recommended):
+   - Use a local web server (recommended):
      ```bash
      # Using Python 3
      python -m http.server 8000
@@ -53,6 +53,35 @@ This is a design thinking project prototype that addresses the seating space sho
      npx http-server
      ```
 3. **Navigate to** `http://localhost:8000` (if using a server) or open the file directly
+
+### 🌐 Deploying to GitHub Pages
+
+This prototype is ready for GitHub Pages deployment. Follow these steps:
+
+1. **Push your code to GitHub**
+   ```bash
+   git init
+   git add .
+   git commit -m "Initial commit: HKUST Library Seat Tracker prototype"
+   git branch -M main
+   git remote add origin https://github.com/YOUR_USERNAME/YOUR_REPO_NAME.git
+   git push -u origin main
+   ```
+
+2. **Enable GitHub Pages**
+   - Go to your repository on GitHub
+   - Click on **Settings** tab
+   - Scroll down to **Pages** section (in the left sidebar)
+   - Under **Source**, select **Deploy from a branch**
+   - Choose **main** branch and **/ (root)** folder
+   - Click **Save**
+
+3. **Access your deployed site**
+   - Your site will be available at: `https://YOUR_USERNAME.github.io/YOUR_REPO_NAME/`
+   - GitHub Pages may take a few minutes to build and deploy
+   - You can check the deployment status in the **Actions** tab
+
+**Note**: The site will automatically update whenever you push changes to the main branch.
 
 ## 📱 Usage Guide
 
