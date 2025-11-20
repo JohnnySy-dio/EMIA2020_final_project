@@ -55,6 +55,13 @@
                 <div class="page-header">
                     <h2>Seat Status</h2>
                     <div class="filter-chips">
+                        <select id="status-filter" class="filter-chip" aria-label="Filter by status">
+                            <option value="all">All Status</option>
+                            <option value="reserved">Reserved</option>
+                            <option value="available">Available</option>
+                            <option value="hogging">Hogging</option>
+                            <option value="occupied">Occupied</option>
+                        </select>
                         <select id="floor-filter" class="filter-chip" aria-label="Filter by floor">
                             <option value="all">All Floors</option>
                             <option value="G">Ground</option>
@@ -222,28 +229,9 @@
                                     
                                     <!-- Seat 5: Normal Use - Studying Hard -->
                                     <div class="seat-demo seat-normal" data-seat="5">
-                                        <div class="seat-chair"></div>
-                                        <div class="desk-table"></div>
-                                        <div class="person-character person-studying">
-                                            <div class="person-head">
-                                                <div class="face">
-                                                    <div class="eye"></div>
-                                                    <div class="eye"></div>
-                                                    <div class="mouth"></div>
-                                                </div>
-                                            </div>
-                                            <div class="person-body"></div>
-                                            <div class="person-arms">
-                                                <div class="arm left writing-arm">
-                                                    <div class="hand writing-hand"></div>
-                                                </div>
-                                                <div class="arm right"></div>
-                                            </div>
-                                        </div>
-                                        <div class="study-items">
-                                            <div class="study-item book-open"></div>
-                                            <div class="study-item pen"></div>
-                                        </div>
+                                        <video autoplay loop muted>
+                                            <source src="seat_normal.mp4">
+                                        </video>
                                         <div class="detection-badge normal">
                                             <span>✓</span>
                                         </div>

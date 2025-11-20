@@ -57,6 +57,7 @@ function setupEventListeners() {
     // Filter controls
     document.getElementById('floor-filter').addEventListener('change', renderSeats);
     document.getElementById('zone-filter').addEventListener('change', renderSeats);
+    document.getElementById('status-filter').addEventListener('change', renderSeats);
 
     // Camera toggle
     document.getElementById('toggle-camera').addEventListener('click', toggleCamera);
@@ -88,11 +89,13 @@ function renderSeats() {
     const grid = document.getElementById('seat-grid');
     const floorFilter = document.getElementById('floor-filter').value;
     const zoneFilter = document.getElementById('zone-filter').value;
+    const statusFilter = document.getElementById('status-filter').value;
 
     const filteredSeats = seats.filter(seat => {
         const floorMatch = floorFilter === 'all' || seat.floor === floorFilter;
         const zoneMatch = zoneFilter === 'all' || seat.zone === zoneFilter;
-        return floorMatch && zoneMatch;
+        const statusMatch = statusFilter === 'all' || seat.status === statusFilter;
+        return floorMatch && zoneMatch && statusMatch;
     });
 
     grid.innerHTML = filteredSeats.map(seat => {
