@@ -14,6 +14,7 @@ document.addEventListener('DOMContentLoaded', () => {
     setupEventListeners();
     startSeatUpdates();
     initializeCharts();
+    initializeVideo();
 });
 
 // Generate mock seats
@@ -229,8 +230,29 @@ function startCameraDetection() {
     overlay.innerHTML = '';
     detectionList.innerHTML = '';
 
+    // Play the video when detection starts
+    const video = document.querySelector('.seat-demo[data-seat="5"] video');
+    if (video) {
+        console.log('🎬 Starting video playback...');
+        
+        // Force load if not loaded
+        if (video.readyState < 2) {
+            video.load();
+        }
+        
+        video.play().then(() => {
+            console.log('✓ Video playing successfully!');
+        }).catch(err => {
+            console.log('Video autoplay issue:', err.message);
+            // Try muting and playing again
+            video.muted = true;
+            video.play().catch(e => console.log('Still cannot play:', e.message));
+        });
+    } else {
+        console.warn('Video element not found in startCameraDetection');
+    }
+
     // Update detection list and stats periodically
-    // No need for moving boxes since we have cartoon characters showing the seats
     detectionInterval = setInterval(() => {
         // Update detection list
         updateDetectionList();
@@ -479,6 +501,53 @@ function handleFullscreenChange() {
     } else {
         container.classList.remove('fullscreen');
         icon.textContent = '⛶';
+    }
+}
+
+// Initialize video element
+function initializeVideo() {
+    const video = document.querySelector('.seat-demo[data-seat="5"] video');
+    const container = document.querySelector('.seat-demo[data-seat="5"]');
+    
+    if (video) {
+        console.log('✓ Video initialized successfully');
+        
+        // Ensure video plays when camera is active
+        video.addEventListener('loadedmetadata', () => {
+            console.log('✓ Video loaded:', video.videoWidth + 'x' + video.videoHeight, '(' + video.duration.toFixed(1) + 's)');
+        });
+        
+        video.addEventListener('loadeddata', () => {
+            console.log('✓ Video data loaded');
+        });
+        
+        video.addEventListener('canplay', () => {
+            console.log('✓ Video can play');
+            // Try to play when it's ready
+            video.play().catch(err => {
+                console.log('Cannot autoplay yet:', err.message);
+            });
+        });
+        
+        video.addEventListener('playing', () => {
+            console.log('✓✓ VIDEO IS PLAYING!');
+        });
+        
+        video.addEventListener('error', (e) => {
+            console.error('✗ Video failed to load');
+            const source = video.querySelector('source');
+            if (source && source.error) {
+                console.error('Error code:', source.error.code);
+            }
+        });
+        
+        // Load and play the video
+        video.load();
+        setTimeout(() => {
+            video.play().catch(err => console.log('Autoplay prevented'));
+        }, 100);
+    } else {
+        console.error('✗ Video element not found');
     }
 }
 
