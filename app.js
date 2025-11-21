@@ -460,111 +460,201 @@ function initializeCharts() {
     }
 }
 
-// Fullscreen functionality - Enhanced for mobile
+// Fullscreen functionality - Mobile and Desktop with real API
 function toggleFullscreen() {
-    const container = document.getElementById('camera-feed-container');
-    const btn = document.getElementById('fullscreen-btn');
-    const icon = btn.querySelector('.fullscreen-icon');
-    
-    // Check if currently in fullscreen
-    const isFullscreen = document.fullscreenElement || 
-                        document.webkitFullscreenElement || 
-                        document.mozFullScreenElement || 
-                        document.msFullscreenElement ||
-                        container.classList.contains('fullscreen');
-    
-    if (!isFullscreen) {
-        // Enter fullscreen
-        const requestFullscreen = container.requestFullscreen || 
-                                 container.webkitRequestFullscreen || 
-                                 container.webkitEnterFullscreen ||
-                                 container.mozRequestFullScreen || 
-                                 container.msRequestFullscreen;
-        
-        if (requestFullscreen) {
-            requestFullscreen.call(container).then(() => {
-                container.classList.add('fullscreen');
-                icon.textContent = '⊗'; // Exit fullscreen icon
-                console.log('Entered fullscreen');
-            }).catch(err => {
-                console.warn('Fullscreen request failed:', err);
-                // Fallback: Use CSS fullscreen
-                container.classList.add('fullscreen');
-                icon.textContent = '⊗';
-            });
-        } else {
-            // Fallback for browsers that don't support fullscreen API
-            container.classList.add('fullscreen');
-            icon.textContent = '⊗';
-            console.log('Using CSS fullscreen (fallback)');
-        }
-    } else {
-        // Exit fullscreen
-        const exitFullscreen = document.exitFullscreen || 
-                              document.webkitExitFullscreen || 
-                              document.webkitCancelFullScreen ||
-                              document.mozCancelFullScreen || 
-                              document.msExitFullscreen;
-        
-        if (exitFullscreen && (document.fullscreenElement || document.webkitFullscreenElement)) {
-            exitFullscreen.call(document).then(() => {
-                container.classList.remove('fullscreen');
-                icon.textContent = '⛶'; // Enter fullscreen icon
-                console.log('Exited fullscreen');
-            }).catch(err => {
-                console.warn('Exit fullscreen failed:', err);
-                container.classList.remove('fullscreen');
-                icon.textContent = '⛶';
-            });
-        } else {
-            // Exit CSS fullscreen
-            container.classList.remove('fullscreen');
-            icon.textContent = '⛶';
-            console.log('Exited CSS fullscreen (fallback)');
-        }
-    }
-}
-
-// Handle fullscreen change events - Enhanced for mobile
-document.addEventListener('fullscreenchange', handleFullscreenChange);
-document.addEventListener('webkitfullscreenchange', handleFullscreenChange);
-document.addEventListener('mozfullscreenchange', handleFullscreenChange);
-document.addEventListener('MSFullscreenChange', handleFullscreenChange);
-
-function handleFullscreenChange() {
     const container = document.getElementById('camera-feed-container');
     const btn = document.getElementById('fullscreen-btn');
     const icon = btn?.querySelector('.fullscreen-icon');
     
     if (!container || !icon) return;
     
-    const isInFullscreen = document.fullscreenElement || 
-                          document.webkitFullscreenElement || 
-                          document.mozFullScreenElement || 
-                          document.msFullscreenElement;
+    // Check if currently in fullscreen
+    const isFullscreen = container.classList.contains('fullscreen') ||
+                        document.fullscreenElement ||
+                        document.webkitFullscreenElement ||
+                        document.mozFullScreenElement ||
+                        document.msFullscreenElement;
     
-    if (isInFullscreen) {
-        container.classList.add('fullscreen');
-        icon.textContent = '⊗'; // Exit icon
-        console.log('Fullscreen activated');
+    if (!isFullscreen) {
+        // Enter fullscreen
+        console.log('Entering fullscreen mode...');
+        
+        // Detect mobile device
+        const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+        const isIOS = /iPhone|iPad|iPod/i.test(navigator.userAgent);
+        
+        // Try real Fullscreen API first
+        const requestFullscreen = container.requestFullscreen || 
+                                 container.webkitRequestFullscreen || 
+                                 container.webkitEnterFullscreen ||
+                                 container.mozRequestFullScreen || 
+                                 container.msRequestFullscreen;
+        
+        let apiSuccess = false;
+        
+        if (requestFullscreen) {
+            // Try the native API
+            const fullscreenPromise = requestFullscreen.call(container, 
+                // Pass options for mobile devices
+                isIOS ? { navigationUI: 'hide' } : undefined
+            );
+            
+            if (fullscreenPromise && fullscreenPromise.then) {
+                fullscreenPromise.then(() => {
+                    console.log('✅ Native fullscreen API activated');
+                    container.classList.add('fullscreen');
+                    document.body.classList.add('fullscreen-active');
+                    icon.textContent = '✕';
+                    apiSuccess = true;
+                    
+                    // Hide address bar on mobile
+                    if (isMobile) {
+                        setTimeout(() => window.scrollTo(0, 1), 100);
+                    }
+                }).catch(err => {
+                    console.warn('❌ Fullscreen API failed:', err.message);
+                    // Fallback to CSS
+                    useCSSFullscreen();
+                });
+            } else {
+                // Old API without promise
+                container.classList.add('fullscreen');
+                document.body.classList.add('fullscreen-active');
+                icon.textContent = '✕';
+                apiSuccess = true;
+                console.log('✅ Native fullscreen API activated (legacy)');
+            }
+        } else {
+            // No API support, use CSS fallback
+            useCSSFullscreen();
+        }
+        
+        function useCSSFullscreen() {
+            container.classList.add('fullscreen');
+            document.body.classList.add('fullscreen-active');
+            icon.textContent = '✕';
+            console.log('📱 Using CSS fullscreen (fallback)');
+            
+            // Hide address bar on mobile
+            if (isMobile) {
+                setTimeout(() => window.scrollTo(0, 1), 100);
+            }
+        }
+        
     } else {
-        container.classList.remove('fullscreen');
-        icon.textContent = '⛶'; // Enter icon
-        console.log('Fullscreen deactivated');
+        // Exit fullscreen
+        console.log('Exiting fullscreen mode...');
+        
+        // Try native API exit first
+        if (document.fullscreenElement || document.webkitFullscreenElement || 
+            document.mozFullScreenElement || document.msFullscreenElement) {
+            
+            const exitFullscreen = document.exitFullscreen || 
+                                  document.webkitExitFullscreen || 
+                                  document.webkitCancelFullScreen ||
+                                  document.mozCancelFullScreen || 
+                                  document.msExitFullscreen;
+            
+            if (exitFullscreen) {
+                const exitPromise = exitFullscreen.call(document);
+                
+                if (exitPromise && exitPromise.then) {
+                    exitPromise.then(() => {
+                        console.log('✅ Exited native fullscreen');
+                        exitCleanup();
+                    }).catch(err => {
+                        console.warn('❌ Exit fullscreen failed:', err.message);
+                        exitCleanup();
+                    });
+                } else {
+                    exitCleanup();
+                }
+            } else {
+                exitCleanup();
+            }
+        } else {
+            // CSS fullscreen only
+            exitCleanup();
+        }
+        
+        function exitCleanup() {
+            container.classList.remove('fullscreen');
+            document.body.classList.remove('fullscreen-active');
+            icon.textContent = '⛶';
+            console.log('📱 Fullscreen deactivated');
+        }
     }
 }
 
-// Handle ESC key to exit fullscreen (manual handling for CSS fallback)
+// Handle fullscreen change events (for all browsers including mobile)
+document.addEventListener('fullscreenchange', handleFullscreenChange);
+document.addEventListener('webkitfullscreenchange', handleFullscreenChange);
+document.addEventListener('mozfullscreenchange', handleFullscreenChange);
+document.addEventListener('MSFullscreenChange', handleFullscreenChange);
+// iOS specific events
+document.addEventListener('webkitbeginfullscreen', handleFullscreenChange);
+document.addEventListener('webkitendfullscreen', handleFullscreenChange);
+
+function handleFullscreenChange(event) {
+    const container = document.getElementById('camera-feed-container');
+    const icon = document.querySelector('.fullscreen-icon');
+    
+    if (!container || !icon) return;
+    
+    // Check all possible fullscreen states
+    const isInNativeFullscreen = document.fullscreenElement || 
+                                 document.webkitFullscreenElement || 
+                                 document.mozFullScreenElement || 
+                                 document.msFullscreenElement ||
+                                 document.webkitIsFullScreen ||
+                                 document.webkitDisplayingFullscreen;
+    
+    console.log('Fullscreen change event:', event.type, 'In fullscreen:', isInNativeFullscreen);
+    
+    if (isInNativeFullscreen) {
+        // Sync CSS class with native fullscreen
+        if (!container.classList.contains('fullscreen')) {
+            container.classList.add('fullscreen');
+            document.body.classList.add('fullscreen-active');
+            icon.textContent = '✕';
+            console.log('✅ Fullscreen activated (event handler)');
+        }
+    } else {
+        // Native fullscreen was exited (e.g., via ESC key or back button)
+        if (container.classList.contains('fullscreen')) {
+            container.classList.remove('fullscreen');
+            document.body.classList.remove('fullscreen-active');
+            icon.textContent = '⛶';
+            console.log('📱 Fullscreen deactivated (event handler)');
+        }
+    }
+}
+
+// Handle ESC key to exit CSS fullscreen
 document.addEventListener('keydown', (e) => {
-    if (e.key === 'Escape') {
+    if (e.key === 'Escape' || e.key === 'Esc') {
         const container = document.getElementById('camera-feed-container');
+        const icon = document.querySelector('.fullscreen-icon');
+        
         if (container?.classList.contains('fullscreen')) {
             container.classList.remove('fullscreen');
-            const icon = document.querySelector('.fullscreen-icon');
+            document.body.classList.remove('fullscreen-active');
             if (icon) icon.textContent = '⛶';
+            console.log('Exited fullscreen via ESC key');
         }
     }
 });
+
+// Prevent body scroll when in fullscreen on mobile (but allow container scroll)
+document.addEventListener('touchmove', (e) => {
+    if (document.body.classList.contains('fullscreen-active')) {
+        const container = document.getElementById('camera-feed-container');
+        // Only prevent if touch is outside the camera feed container
+        if (container && !container.contains(e.target)) {
+            e.preventDefault();
+        }
+    }
+}, { passive: false });
 
 // Initialize video element
 function initializeVideo() {
