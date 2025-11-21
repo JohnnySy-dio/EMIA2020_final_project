@@ -3,6 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <title>HKUST Library Seat Tracker - Design Thinking Prototype</title>
     <link rel="stylesheet" href="styles.css">
 </head>
@@ -55,6 +56,13 @@
                 <div class="page-header">
                     <h2>Seat Status</h2>
                     <div class="filter-chips">
+                        <select id="status-filter" class="filter-chip" aria-label="Filter by status">
+                            <option value="all">All Status</option>
+                            <option value="reserved">Reserved</option>
+                            <option value="available">Available</option>
+                            <option value="hogging">Hogging</option>
+                            <option value="occupied">Occupied</option>
+                        </select>
                         <select id="floor-filter" class="filter-chip" aria-label="Filter by floor">
                             <option value="all">All Floors</option>
                             <option value="G">Ground</option>
@@ -130,210 +138,105 @@
                                     <div class="bookshelf"></div>
                                 </div>
                                 
-                                <!-- Seats and Characters -->
+                                <!-- Video Seats Container -->
                                 <div class="seats-container">
-                                    <!-- Seat 1: Normal Use - Studying Hard -->
-                                    <div class="seat-demo seat-normal" data-seat="1">
-                                        <div class="seat-chair"></div>
-                                        <div class="desk-table"></div>
-                                        <div class="person-character person-studying">
-                                            <div class="person-head">
-                                                <div class="face">
-                                                    <div class="eye"></div>
-                                                    <div class="eye"></div>
-                                                    <div class="mouth"></div>
-                                                </div>
-                                            </div>
-                                            <div class="person-body"></div>
-                                            <div class="person-arms">
-                                                <div class="arm left writing-arm">
-                                                    <div class="hand writing-hand"></div>
-                                                </div>
-                                                <div class="arm right"></div>
-                                            </div>
-                                        </div>
-                                        <div class="study-items">
-                                            <div class="study-item book-open"></div>
-                                            <div class="study-item pen"></div>
-                                        </div>
+                                    <!-- Seat 1: Normal Use - VIDEO -->
+                                    <div class="seat-demo seat-normal has-video" data-seat="1">
+                                        <video autoplay loop muted playsinline preload="auto">
+                                            <source src="video/seat_normal_2.mp4" type="video/mp4">
+                                            Your browser does not support the video tag.
+                                        </video>
                                         <div class="detection-badge normal">
                                             <span>✓</span>
                                         </div>
                                     </div>
                                     
-                                    <!-- Seat 2: Seat Hogging - Items Left, No Person -->
-                                    <div class="seat-demo seat-hogging" data-seat="2">
-                                        <div class="seat-chair"></div>
-                                        <div class="desk-table"></div>
-                                        <div class="left-items">
-                                            <div class="item book"></div>
-                                            <div class="item bag"></div>
-                                            <div class="item water-bottle"></div>
-                                        </div>
+                                    <!-- Seat 2: Hogging - VIDEO -->
+                                    <div class="seat-demo seat-hogging has-video" data-seat="2">
+                                        <video autoplay loop muted playsinline preload="auto">
+                                            <source src="video/seat_hogging_3.mp4" type="video/mp4">
+                                            Your browser does not support the video tag.
+                                        </video>
                                         <div class="detection-badge hogging">
                                             <span>⚠️</span>
                                         </div>
-                                        <div class="scan-beam"></div>
                                     </div>
                                     
-                                    <!-- Seat 3: Normal Use - Studying Hard -->
-                                    <div class="seat-demo seat-normal" data-seat="3">
-                                        <div class="seat-chair"></div>
-                                        <div class="desk-table"></div>
-                                        <div class="person-character person-studying">
-                                            <div class="person-head">
-                                                <div class="face">
-                                                    <div class="eye"></div>
-                                                    <div class="eye"></div>
-                                                    <div class="mouth"></div>
-                                                </div>
-                                            </div>
-                                            <div class="person-body"></div>
-                                            <div class="person-arms">
-                                                <div class="arm left reading-arm">
-                                                    <div class="hand reading-hand"></div>
-                                                </div>
-                                                <div class="arm right"></div>
-                                            </div>
-                                        </div>
-                                        <div class="study-items">
-                                            <div class="study-item book-reading"></div>
-                                            <div class="study-item notebook"></div>
-                                        </div>
+                                    <!-- Seat 3: Normal Use - VIDEO -->
+                                    <div class="seat-demo seat-normal has-video" data-seat="3">
+                                        <video autoplay loop muted playsinline preload="auto">
+                                            <source src="video/seat_normal_3.mp4" type="video/mp4">
+                                            Your browser does not support the video tag.
+                                        </video>
                                         <div class="detection-badge normal">
                                             <span>✓</span>
                                         </div>
                                     </div>
                                     
-                                    <!-- Seat 4: Seat Hogging - Items Left, No Person -->
-                                    <div class="seat-demo seat-hogging" data-seat="4">
-                                        <div class="seat-chair"></div>
-                                        <div class="desk-table"></div>
-                                        <div class="left-items">
-                                            <div class="item laptop"></div>
-                                            <div class="item notebook"></div>
-                                            <div class="item coffee-cup"></div>
-                                        </div>
+                                    <!-- Seat 4: Hogging - VIDEO -->
+                                    <div class="seat-demo seat-hogging has-video" data-seat="4">
+                                        <video autoplay loop muted playsinline preload="auto">
+                                            <source src="video/seat_hogging_2.mp4" type="video/mp4">
+                                            Your browser does not support the video tag.
+                                        </video>
                                         <div class="detection-badge hogging">
                                             <span>⚠️</span>
                                         </div>
-                                        <div class="scan-beam"></div>
                                     </div>
                                     
-                                    <!-- Seat 5: Normal Use - Studying Hard -->
-                                    <div class="seat-demo seat-normal" data-seat="5">
-                                        <div class="seat-chair"></div>
-                                        <div class="desk-table"></div>
-                                        <div class="person-character person-studying">
-                                            <div class="person-head">
-                                                <div class="face">
-                                                    <div class="eye"></div>
-                                                    <div class="eye"></div>
-                                                    <div class="mouth"></div>
-                                                </div>
-                                            </div>
-                                            <div class="person-body"></div>
-                                            <div class="person-arms">
-                                                <div class="arm left writing-arm">
-                                                    <div class="hand writing-hand"></div>
-                                                </div>
-                                                <div class="arm right"></div>
-                                            </div>
-                                        </div>
-                                        <div class="study-items">
-                                            <div class="study-item book-open"></div>
-                                            <div class="study-item pen"></div>
-                                        </div>
+                                    <!-- Seat 5: Normal Use - VIDEO -->
+                                    <div class="seat-demo seat-normal has-video" data-seat="5">
+                                        <video autoplay loop muted playsinline preload="metadata">
+                                            <source src="video/seat_normal.mp4" type="video/mp4">
+                                            Your browser does not support the video tag.
+                                        </video>
                                         <div class="detection-badge normal">
                                             <span>✓</span>
                                         </div>
                                     </div>
                                     
-                                    <!-- Seat 6: Seat Hogging - Items Left, No Person -->
-                                    <div class="seat-demo seat-hogging" data-seat="6">
-                                        <div class="seat-chair"></div>
-                                        <div class="desk-table"></div>
-                                        <div class="left-items">
-                                            <div class="item book"></div>
-                                            <div class="item bag"></div>
-                                        </div>
+                                    <!-- Seat 6: Hogging - VIDEO -->
+                                    <div class="seat-demo seat-hogging has-video" data-seat="6">
+                                        <video autoplay loop muted playsinline preload="auto">
+                                            <source src="video/seat_hogging.mp4" type="video/mp4">
+                                            Your browser does not support the video tag.
+                                        </video>
                                         <div class="detection-badge hogging">
                                             <span>⚠️</span>
                                         </div>
-                                        <div class="scan-beam"></div>
                                     </div>
                                     
-                                    <!-- Seat 7: Normal Use - Studying Hard -->
-                                    <div class="seat-demo seat-normal" data-seat="7">
-                                        <div class="seat-chair"></div>
-                                        <div class="desk-table"></div>
-                                        <div class="person-character person-studying">
-                                            <div class="person-head">
-                                                <div class="face">
-                                                    <div class="eye"></div>
-                                                    <div class="eye"></div>
-                                                    <div class="mouth"></div>
-                                                </div>
-                                            </div>
-                                            <div class="person-body"></div>
-                                            <div class="person-arms">
-                                                <div class="arm left reading-arm">
-                                                    <div class="hand reading-hand"></div>
-                                                </div>
-                                                <div class="arm right"></div>
-                                            </div>
-                                        </div>
-                                        <div class="study-items">
-                                            <div class="study-item book-reading"></div>
-                                            <div class="study-item notebook"></div>
-                                        </div>
+                                    <!-- Seat 7: Normal Use - VIDEO -->
+                                    <div class="seat-demo seat-normal has-video" data-seat="7">
+                                        <video autoplay loop muted playsinline preload="auto">
+                                            <source src="video/seat_normal_4.mp4" type="video/mp4">
+                                            Your browser does not support the video tag.
+                                        </video>
                                         <div class="detection-badge normal">
                                             <span>✓</span>
                                         </div>
                                     </div>
                                     
-                                    <!-- Seat 8: Normal Use - Studying Hard -->
-                                    <div class="seat-demo seat-normal" data-seat="8">
-                                        <div class="seat-chair"></div>
-                                        <div class="desk-table"></div>
-                                        <div class="person-character person-studying">
-                                            <div class="person-head">
-                                                <div class="face">
-                                                    <div class="eye"></div>
-                                                    <div class="eye"></div>
-                                                    <div class="mouth"></div>
-                                                </div>
-                                            </div>
-                                            <div class="person-body"></div>
-                                            <div class="person-arms">
-                                                <div class="arm left writing-arm">
-                                                    <div class="hand writing-hand"></div>
-                                                </div>
-                                                <div class="arm right"></div>
-                                            </div>
-                                        </div>
-                                        <div class="study-items">
-                                            <div class="study-item book-open"></div>
-                                            <div class="study-item pen"></div>
-                                        </div>
+                                    <!-- Seat 8: Normal Use - VIDEO -->
+                                    <div class="seat-demo seat-normal has-video" data-seat="8">
+                                        <video autoplay loop muted playsinline preload="auto">
+                                            <source src="video/seat_normal_5.mp4" type="video/mp4">
+                                            Your browser does not support the video tag.
+                                        </video>
                                         <div class="detection-badge normal">
                                             <span>✓</span>
                                         </div>
                                     </div>
                                     
-                                    <!-- Seat 9: Seat Hogging - Items Left, No Person -->
-                                    <div class="seat-demo seat-hogging" data-seat="9">
-                                        <div class="seat-chair"></div>
-                                        <div class="desk-table"></div>
-                                        <div class="left-items">
-                                            <div class="item laptop"></div>
-                                            <div class="item water-bottle"></div>
-                                            <div class="item coffee-cup"></div>
-                                        </div>
+                                    <!-- Seat 9: Hogging - VIDEO -->
+                                    <div class="seat-demo seat-hogging has-video" data-seat="9">
+                                        <video autoplay loop muted playsinline preload="auto">
+                                            <source src="video/seat_hogging_4.mp4" type="video/mp4">
+                                            Your browser does not support the video tag.
+                                        </video>
                                         <div class="detection-badge hogging">
                                             <span>⚠️</span>
                                         </div>
-                                        <div class="scan-beam"></div>
                                     </div>
                                 </div>
                                 

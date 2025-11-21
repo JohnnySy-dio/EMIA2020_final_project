@@ -14,6 +14,7 @@ document.addEventListener('DOMContentLoaded', () => {
     setupEventListeners();
     startSeatUpdates();
     initializeCharts();
+    initializeVideo();
 });
 
 // Generate mock seats
@@ -57,6 +58,7 @@ function setupEventListeners() {
     // Filter controls
     document.getElementById('floor-filter').addEventListener('change', renderSeats);
     document.getElementById('zone-filter').addEventListener('change', renderSeats);
+    document.getElementById('status-filter').addEventListener('change', renderSeats);
 
     // Camera toggle
     document.getElementById('toggle-camera').addEventListener('click', toggleCamera);
@@ -88,11 +90,13 @@ function renderSeats() {
     const grid = document.getElementById('seat-grid');
     const floorFilter = document.getElementById('floor-filter').value;
     const zoneFilter = document.getElementById('zone-filter').value;
+    const statusFilter = document.getElementById('status-filter').value;
 
     const filteredSeats = seats.filter(seat => {
         const floorMatch = floorFilter === 'all' || seat.floor === floorFilter;
         const zoneMatch = zoneFilter === 'all' || seat.zone === zoneFilter;
-        return floorMatch && zoneMatch;
+        const statusMatch = statusFilter === 'all' || seat.status === statusFilter;
+        return floorMatch && zoneMatch && statusMatch;
     });
 
     grid.innerHTML = filteredSeats.map(seat => {
@@ -226,8 +230,42 @@ function startCameraDetection() {
     overlay.innerHTML = '';
     detectionList.innerHTML = '';
 
+    // Play the video when detection starts
+    const video = document.querySelector('.seat-demo[data-seat="5"] video');
+    if (video) {
+        console.log('🎬 Starting video playback...');
+        
+        // Force load if not loaded
+        if (video.readyState < 2) {
+            video.load();
+        }
+        
+        // Ensure muted for autoplay (required on HTTPS/GitHub Pages)
+        video.muted = true;
+        video.volume = 0;
+        
+        // Try to play with better error handling for GitHub Pages
+        const playPromise = video.play();
+        
+        if (playPromise !== undefined) {
+            playPromise.then(() => {
+                console.log('✓ Video playing successfully!');
+            }).catch(err => {
+                console.warn('Autoplay blocked (common on GitHub Pages):', err.message);
+                console.log('Click the video to play manually');
+                
+                // Add click handler as fallback
+                video.addEventListener('click', function playOnClick() {
+                    video.play();
+                    video.removeEventListener('click', playOnClick);
+                }, { once: true });
+            });
+        }
+    } else {
+        console.warn('Video element not found in startCameraDetection');
+    }
+
     // Update detection list and stats periodically
-    // No need for moving boxes since we have cartoon characters showing the seats
     detectionInterval = setInterval(() => {
         // Update detection list
         updateDetectionList();
@@ -476,6 +514,53 @@ function handleFullscreenChange() {
     } else {
         container.classList.remove('fullscreen');
         icon.textContent = '⛶';
+    }
+}
+
+// Initialize video element
+function initializeVideo() {
+    const video = document.querySelector('.seat-demo[data-seat="5"] video');
+    const container = document.querySelector('.seat-demo[data-seat="5"]');
+    
+    if (video) {
+        console.log('✓ Video initialized successfully');
+        
+        // Ensure video plays when camera is active
+        video.addEventListener('loadedmetadata', () => {
+            console.log('✓ Video loaded:', video.videoWidth + 'x' + video.videoHeight, '(' + video.duration.toFixed(1) + 's)');
+        });
+        
+        video.addEventListener('loadeddata', () => {
+            console.log('✓ Video data loaded');
+        });
+        
+        video.addEventListener('canplay', () => {
+            console.log('✓ Video can play');
+            // Try to play when it's ready
+            video.play().catch(err => {
+                console.log('Cannot autoplay yet:', err.message);
+            });
+        });
+        
+        video.addEventListener('playing', () => {
+            console.log('✓✓ VIDEO IS PLAYING!');
+        });
+        
+        video.addEventListener('error', (e) => {
+            console.error('✗ Video failed to load');
+            const source = video.querySelector('source');
+            if (source && source.error) {
+                console.error('Error code:', source.error.code);
+            }
+        });
+        
+        // Load and play the video
+        video.load();
+        setTimeout(() => {
+            video.play().catch(err => console.log('Autoplay prevented'));
+        }, 100);
+    } else {
+        console.error('✗ Video element not found');
     }
 }
 
