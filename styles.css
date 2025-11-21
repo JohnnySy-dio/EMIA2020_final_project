@@ -351,11 +351,31 @@ body {
    CAMERA FEED - CLEAN REWRITE
    ============================================ */
 
+/* ============================================
+   CAMERA FEED - CLEAN REWRITE
+   ============================================ */
+
 /* Camera Tab */
 .camera-container {
     display: flex;
     flex-direction: column;
     gap: 20px;
+}
+
+/* Touch improvements for mobile */
+@media (hover: none) and (pointer: coarse) {
+    .seat:hover,
+    .nav-btn:hover,
+    .btn-mobile:hover,
+    .detection-item:hover {
+        transform: none;
+    }
+    
+    .seat:active,
+    .nav-btn:active,
+    .btn-mobile:active {
+        transform: scale(0.95);
+    }
 }
 
 .camera-controls-mobile {
@@ -1477,51 +1497,363 @@ body {
     opacity: 0.9;
 }
 
-/* Responsive */
+/* ============================================
+   RESPONSIVE DESIGN - Mobile & Tablet Support
+   ============================================ */
+
+/* Tablet (iPad, etc.) - 768px to 1024px */
+@media (max-width: 1024px) {
+    .desktop-app {
+        min-height: 100vh;
+    }
+    
+    .desktop-header {
+        padding: 20px 30px;
+    }
+    
+    .logo-section h1 {
+        font-size: 28px;
+    }
+    
+    .header-stats {
+        gap: 30px;
+    }
+    
+    .stat-value {
+        font-size: 28px;
+    }
+    
+    .camera-feed-container {
+        max-height: 550px;
+    }
+    
+    .seats-container {
+        gap: 10px;
+        padding: 12px;
+    }
+    
+    .seat-demo {
+        min-height: 100px;
+    }
+}
+
+/* Mobile Landscape & Small Tablets - 481px to 768px */
 @media (max-width: 768px) {
     body {
         padding: 10px;
     }
     
+    .desktop-app {
+        border-radius: 12px;
+    }
+    
+    /* Header - Stack vertically on mobile */
     .desktop-header {
         flex-direction: column;
-        gap: 20px;
+        gap: 15px;
         text-align: center;
+        padding: 20px;
+    }
+    
+    .logo-section h1 {
+        font-size: 24px;
+    }
+    
+    .subtitle {
+        font-size: 14px;
     }
     
     .header-stats {
         justify-content: center;
-    }
-    
-    .top-nav {
+        gap: 25px;
         flex-wrap: wrap;
     }
     
+    .stat-label {
+        font-size: 12px;
+    }
+    
+    .stat-value {
+        font-size: 24px;
+    }
+    
+    /* Navigation - Smaller buttons */
+    .top-nav {
+        flex-wrap: nowrap;
+        overflow-x: auto;
+    }
+    
     .nav-btn {
-        padding: 12px 20px;
+        padding: 14px 20px;
         font-size: 14px;
+        flex-shrink: 0;
     }
     
+    .nav-icon {
+        font-size: 18px;
+    }
+    
+    /* Content */
     .tab-content {
-        padding: 20px;
+        padding: 20px 15px;
     }
     
-    .seat-grid {
-        grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+    .page-header {
+        flex-direction: column;
+        align-items: flex-start;
         gap: 15px;
     }
     
-    .analytics-container-mobile {
-        grid-template-columns: 1fr;
+    .page-header h2 {
+        font-size: 22px;
+    }
+    
+    .filter-chips {
+        width: 100%;
+        flex-direction: column;
+    }
+    
+    .filter-chip {
+        width: 100%;
+        min-width: 100%;
+    }
+    
+    /* Seat Dashboard Grid - 2 columns on mobile */
+    .seat-grid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 12px;
+    }
+    
+    .seat {
+        min-height: 100px;
+    }
+    
+    .seat-id {
+        font-size: 16px;
+    }
+    
+    .seat-status {
+        font-size: 11px;
+    }
+    
+    /* Camera Feed - Adjust for mobile */
+    .camera-controls-mobile {
+        flex-direction: column;
+        gap: 12px;
+    }
+    
+    .btn-mobile {
+        width: 100%;
+        padding: 12px 20px;
+    }
+    
+    .status-indicator-mobile {
+        width: 100%;
+        justify-content: center;
     }
     
     .camera-feed-container {
-        min-height: 300px;
+        min-height: 400px;
+        max-height: 500px;
+        aspect-ratio: 4/3;
     }
     
+    /* Video Grid - 2 columns on mobile */
     .seats-container {
-        grid-template-columns: repeat(2, 1fr);
+        grid-template-columns: repeat(2, 1fr) !important;
+        grid-template-rows: repeat(5, minmax(100px, 1fr)) !important;
+        gap: 8px;
+        padding: 10px;
+        min-height: 350px;
+    }
+    
+    .seat-demo {
+        min-height: 90px;
+        border-radius: 6px;
+    }
+    
+    .detection-badge {
+        width: 24px;
+        height: 24px;
+        font-size: 10px;
+        top: 2px;
+        right: 2px;
+    }
+    
+    /* Detection Panel */
+    .detection-panel {
+        padding: 15px;
+    }
+    
+    .detection-panel h3 {
+        font-size: 18px;
+    }
+    
+    .detection-item {
+        padding: 12px;
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 10px;
+    }
+    
+    .detection-icon {
+        font-size: 24px;
+    }
+    
+    .cv-stats-mobile {
+        grid-template-columns: 1fr;
+        gap: 12px;
+    }
+    
+    .cv-stat-card-mobile {
+        flex-direction: row;
+        justify-content: flex-start;
+        padding: 15px;
+    }
+    
+    .cv-stat-icon {
+        font-size: 28px;
+    }
+    
+    /* Analytics */
+    .analytics-container-mobile {
+        grid-template-columns: 1fr;
+        gap: 20px;
+    }
+    
+    .chart-card-mobile {
+        padding: 20px;
+    }
+    
+    .summary-stats-mobile {
+        grid-template-columns: 1fr;
+        gap: 15px;
+    }
+    
+    /* Legend */
+    .legend-mobile {
         gap: 15px;
         padding: 15px;
+    }
+    
+    .legend-item {
+        font-size: 13px;
+    }
+}
+
+/* Mobile Portrait - 320px to 480px */
+@media (max-width: 480px) {
+    body {
+        padding: 5px;
+    }
+    
+    .desktop-app {
+        border-radius: 8px;
+    }
+    
+    .desktop-header {
+        padding: 15px;
+    }
+    
+    .logo-section h1 {
+        font-size: 20px;
+    }
+    
+    .subtitle {
+        font-size: 12px;
+    }
+    
+    .header-stats {
+        gap: 15px;
+    }
+    
+    .stat-label {
+        font-size: 11px;
+    }
+    
+    .stat-value {
+        font-size: 20px;
+    }
+    
+    .nav-btn {
+        padding: 12px 15px;
+        font-size: 13px;
+        gap: 5px;
+    }
+    
+    .nav-icon {
+        font-size: 16px;
+    }
+    
+    .nav-text {
+        font-size: 12px;
+    }
+    
+    .tab-content {
+        padding: 15px 10px;
+    }
+    
+    .page-header h2 {
+        font-size: 20px;
+    }
+    
+    /* Camera Feed - Smaller on small phones */
+    .camera-feed-container {
+        min-height: 300px;
+        max-height: 400px;
+    }
+    
+    /* Video Grid - Single column on very small screens */
+    .seats-container {
+        grid-template-columns: 1fr !important;
+        grid-template-rows: repeat(9, minmax(150px, 1fr)) !important;
+        gap: 10px;
+        padding: 10px;
+    }
+    
+    .seat-demo {
+        min-height: 150px;
+    }
+    
+    .placeholder-text {
+        font-size: 12px;
+    }
+    
+    .detection-badge {
+        width: 22px;
+        height: 22px;
+        font-size: 9px;
+    }
+    
+    /* Smaller buttons and controls */
+    .btn-mobile {
+        padding: 10px 16px;
+        font-size: 14px;
+    }
+    
+    .fullscreen-btn {
+        width: 36px;
+        height: 36px;
+        font-size: 18px;
+    }
+    
+    .detection-panel {
+        padding: 12px;
+    }
+    
+    .detection-title {
+        font-size: 14px;
+    }
+    
+    .detection-details {
+        font-size: 12px;
+    }
+    
+    .cv-stat-value {
+        font-size: 20px;
+    }
+    
+    .cv-stat-label {
+        font-size: 11px;
     }
 }
