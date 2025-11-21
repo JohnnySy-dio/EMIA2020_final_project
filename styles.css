@@ -463,14 +463,39 @@ body {
 }
 
 .camera-feed-container.fullscreen {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100vw;
-    height: 100vh;
-    z-index: 9999;
-    border-radius: 0;
-    aspect-ratio: auto;
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    width: 100vw !important;
+    height: 100vh !important;
+    max-height: 100vh !important;
+    z-index: 9999 !important;
+    background: #000 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    border-radius: 0 !important;
+    aspect-ratio: auto !important;
+}
+
+/* Ensure controls are visible in fullscreen */
+.camera-feed-container.fullscreen .controls {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    z-index: 10000;
+}
+
+.camera-feed-container.fullscreen .fullscreen-btn {
+    background: rgba(0, 0, 0, 0.8);
+    border-color: white;
+}
+
+/* Make seats container fill fullscreen properly */
+.camera-feed-container.fullscreen .seats-container {
+    width: 100% !important;
+    height: 100% !important;
+    max-height: 100% !important;
+    padding: 10px !important;
 }
 
 .fullscreen-btn {
@@ -479,6 +504,8 @@ body {
     right: 15px;
     width: 45px;
     height: 45px;
+    min-width: 45px;  /* Ensure minimum touch target */
+    min-height: 45px;
     background: rgba(0, 0, 0, 0.6);
     border: 2px solid rgba(255, 255, 255, 0.8);
     border-radius: 8px;
@@ -492,6 +519,10 @@ body {
     transition: all 0.3s;
     -webkit-backdrop-filter: blur(10px);
     backdrop-filter: blur(10px);
+    -webkit-tap-highlight-color: transparent;  /* Remove tap highlight on mobile */
+    -webkit-user-select: none;
+    user-select: none;
+    touch-action: manipulation;  /* Improve touch response */
 }
 
 .fullscreen-btn:hover {
@@ -502,6 +533,13 @@ body {
 
 .fullscreen-btn:active {
     transform: scale(0.95);
+    background: rgba(0, 0, 0, 0.9);
+}
+
+/* Ensure button stays visible and clickable */
+.fullscreen-btn:focus {
+    outline: 2px solid white;
+    outline-offset: 2px;
 }
 
 .fullscreen-icon {
@@ -1832,9 +1870,30 @@ body {
     }
     
     .fullscreen-btn {
-        width: 36px;
-        height: 36px;
-        font-size: 18px;
+        width: 44px;  /* Increased for better touch target */
+        height: 44px;
+        min-width: 44px;  /* iOS minimum recommended touch target */
+        min-height: 44px;
+        font-size: 20px;
+        top: 10px;
+        right: 10px;
+    }
+    
+    /* Fullscreen mode adjustments for mobile */
+    .camera-feed-container.fullscreen {
+        padding: 0 !important;
+    }
+    
+    .camera-feed-container.fullscreen .seats-container {
+        gap: 5px !important;
+        padding: 5px !important;
+    }
+    
+    .camera-feed-container.fullscreen .fullscreen-btn {
+        width: 44px;
+        height: 44px;
+        font-size: 22px;
+        background: rgba(0, 0, 0, 0.8);
     }
     
     .detection-panel {

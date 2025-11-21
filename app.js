@@ -460,43 +460,72 @@ function initializeCharts() {
     }
 }
 
-// Fullscreen functionality
+// Fullscreen functionality - Enhanced for mobile
 function toggleFullscreen() {
     const container = document.getElementById('camera-feed-container');
     const btn = document.getElementById('fullscreen-btn');
     const icon = btn.querySelector('.fullscreen-icon');
     
-    if (!document.fullscreenElement && !document.webkitFullscreenElement && 
-        !document.mozFullScreenElement && !document.msFullscreenElement) {
+    // Check if currently in fullscreen
+    const isFullscreen = document.fullscreenElement || 
+                        document.webkitFullscreenElement || 
+                        document.mozFullScreenElement || 
+                        document.msFullscreenElement ||
+                        container.classList.contains('fullscreen');
+    
+    if (!isFullscreen) {
         // Enter fullscreen
-        if (container.requestFullscreen) {
-            container.requestFullscreen();
-        } else if (container.webkitRequestFullscreen) {
-            container.webkitRequestFullscreen();
-        } else if (container.mozRequestFullScreen) {
-            container.mozRequestFullScreen();
-        } else if (container.msRequestFullscreen) {
-            container.msRequestFullscreen();
+        const requestFullscreen = container.requestFullscreen || 
+                                 container.webkitRequestFullscreen || 
+                                 container.webkitEnterFullscreen ||
+                                 container.mozRequestFullScreen || 
+                                 container.msRequestFullscreen;
+        
+        if (requestFullscreen) {
+            requestFullscreen.call(container).then(() => {
+                container.classList.add('fullscreen');
+                icon.textContent = '⊗'; // Exit fullscreen icon
+                console.log('Entered fullscreen');
+            }).catch(err => {
+                console.warn('Fullscreen request failed:', err);
+                // Fallback: Use CSS fullscreen
+                container.classList.add('fullscreen');
+                icon.textContent = '⊗';
+            });
+        } else {
+            // Fallback for browsers that don't support fullscreen API
+            container.classList.add('fullscreen');
+            icon.textContent = '⊗';
+            console.log('Using CSS fullscreen (fallback)');
         }
-        container.classList.add('fullscreen');
-        icon.textContent = '⛶';
     } else {
         // Exit fullscreen
-        if (document.exitFullscreen) {
-            document.exitFullscreen();
-        } else if (document.webkitExitFullscreen) {
-            document.webkitExitFullscreen();
-        } else if (document.mozCancelFullScreen) {
-            document.mozCancelFullScreen();
-        } else if (document.msExitFullscreen) {
-            document.msExitFullscreen();
+        const exitFullscreen = document.exitFullscreen || 
+                              document.webkitExitFullscreen || 
+                              document.webkitCancelFullScreen ||
+                              document.mozCancelFullScreen || 
+                              document.msExitFullscreen;
+        
+        if (exitFullscreen && (document.fullscreenElement || document.webkitFullscreenElement)) {
+            exitFullscreen.call(document).then(() => {
+                container.classList.remove('fullscreen');
+                icon.textContent = '⛶'; // Enter fullscreen icon
+                console.log('Exited fullscreen');
+            }).catch(err => {
+                console.warn('Exit fullscreen failed:', err);
+                container.classList.remove('fullscreen');
+                icon.textContent = '⛶';
+            });
+        } else {
+            // Exit CSS fullscreen
+            container.classList.remove('fullscreen');
+            icon.textContent = '⛶';
+            console.log('Exited CSS fullscreen (fallback)');
         }
-        container.classList.remove('fullscreen');
-        icon.textContent = '⛶';
     }
 }
 
-// Handle fullscreen change events
+// Handle fullscreen change events - Enhanced for mobile
 document.addEventListener('fullscreenchange', handleFullscreenChange);
 document.addEventListener('webkitfullscreenchange', handleFullscreenChange);
 document.addEventListener('mozfullscreenchange', handleFullscreenChange);
@@ -505,17 +534,37 @@ document.addEventListener('MSFullscreenChange', handleFullscreenChange);
 function handleFullscreenChange() {
     const container = document.getElementById('camera-feed-container');
     const btn = document.getElementById('fullscreen-btn');
-    const icon = btn.querySelector('.fullscreen-icon');
+    const icon = btn?.querySelector('.fullscreen-icon');
     
-    if (document.fullscreenElement || document.webkitFullscreenElement || 
-        document.mozFullScreenElement || document.msFullscreenElement) {
+    if (!container || !icon) return;
+    
+    const isInFullscreen = document.fullscreenElement || 
+                          document.webkitFullscreenElement || 
+                          document.mozFullScreenElement || 
+                          document.msFullscreenElement;
+    
+    if (isInFullscreen) {
         container.classList.add('fullscreen');
-        icon.textContent = '⛶';
+        icon.textContent = '⊗'; // Exit icon
+        console.log('Fullscreen activated');
     } else {
         container.classList.remove('fullscreen');
-        icon.textContent = '⛶';
+        icon.textContent = '⛶'; // Enter icon
+        console.log('Fullscreen deactivated');
     }
 }
+
+// Handle ESC key to exit fullscreen (manual handling for CSS fallback)
+document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') {
+        const container = document.getElementById('camera-feed-container');
+        if (container?.classList.contains('fullscreen')) {
+            container.classList.remove('fullscreen');
+            const icon = document.querySelector('.fullscreen-icon');
+            if (icon) icon.textContent = '⛶';
+        }
+    }
+});
 
 // Initialize video element
 function initializeVideo() {
