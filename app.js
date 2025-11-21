@@ -240,14 +240,27 @@ function startCameraDetection() {
             video.load();
         }
         
-        video.play().then(() => {
-            console.log('✓ Video playing successfully!');
-        }).catch(err => {
-            console.log('Video autoplay issue:', err.message);
-            // Try muting and playing again
-            video.muted = true;
-            video.play().catch(e => console.log('Still cannot play:', e.message));
-        });
+        // Ensure muted for autoplay (required on HTTPS/GitHub Pages)
+        video.muted = true;
+        video.volume = 0;
+        
+        // Try to play with better error handling for GitHub Pages
+        const playPromise = video.play();
+        
+        if (playPromise !== undefined) {
+            playPromise.then(() => {
+                console.log('✓ Video playing successfully!');
+            }).catch(err => {
+                console.warn('Autoplay blocked (common on GitHub Pages):', err.message);
+                console.log('Click the video to play manually');
+                
+                // Add click handler as fallback
+                video.addEventListener('click', function playOnClick() {
+                    video.play();
+                    video.removeEventListener('click', playOnClick);
+                }, { once: true });
+            });
+        }
     } else {
         console.warn('Video element not found in startCameraDetection');
     }
