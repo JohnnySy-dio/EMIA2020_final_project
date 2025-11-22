@@ -1,5 +1,5 @@
 // Mock data for seats
-const floors = ['G', '1', '2', '3'];
+const floors = ['1/F', 'G/F', 'LG1', 'LG3', 'LG4', 'LG5'];
 const zones = ['quiet', 'group', 'computer'];
 const seatStatuses = ['available', 'occupied', 'hogging', 'reserved'];
 
@@ -10,11 +10,18 @@ let seatUpdateInterval = null;
 
 // Initialize the application
 document.addEventListener('DOMContentLoaded', () => {
+    generateLibraryMap();
     initializeSeats();
     setupEventListeners();
+    initializeMapControls();
     startSeatUpdates();
     initializeCharts();
     initializeVideo();
+    
+    // Initialize zoom indicator after a short delay to ensure DOM is ready
+    setTimeout(() => {
+        updateZoomIndicator();
+    }, 200);
 });
 
 // Generate mock seats
@@ -28,8 +35,10 @@ function initializeSeats() {
                 const status = seatStatuses[Math.floor(Math.random() * 4)];
                 const lastUpdate = Date.now() - Math.random() * 3600000; // Random time in last hour
                 
+                // Create seat ID with floor name (handle special characters like /)
+                const floorId = floor.replace('/', '-');
                 seats.push({
-                    id: `${floor}-${zone.charAt(0).toUpperCase()}-${seatId++}`,
+                    id: `${floorId}-${zone.charAt(0).toUpperCase()}-${seatId++}`,
                     floor: floor,
                     zone: zone,
                     status: status,
@@ -55,16 +64,16 @@ function setupEventListeners() {
         });
     });
 
-    // Filter controls
-    document.getElementById('floor-filter').addEventListener('change', renderSeats);
-    document.getElementById('zone-filter').addEventListener('change', renderSeats);
-    document.getElementById('status-filter').addEventListener('change', renderSeats);
+    // Filter controls - only floor filter for map view
+    document.getElementById('floor-filter').addEventListener('change', () => {
+        generateLibraryMap();
+        renderSeats();
+    });
 
     // Camera toggle
     document.getElementById('toggle-camera').addEventListener('click', toggleCamera);
     
-    // Fullscreen toggle
-    document.getElementById('fullscreen-btn').addEventListener('click', toggleFullscreen);
+    // Fullscreen toggle for camera feed - will be attached in DOMContentLoaded
 }
 
 // Tab switching
@@ -85,42 +94,1072 @@ function switchTab(tabName) {
     }
 }
 
-// Render seats grid
-function renderSeats() {
-    const grid = document.getElementById('seat-grid');
-    const floorFilter = document.getElementById('floor-filter').value;
-    const zoneFilter = document.getElementById('zone-filter').value;
-    const statusFilter = document.getElementById('status-filter').value;
+// Library map configuration
+const mapConfig = {
+    zoom: 0.8, // Start zoomed out to see more of the map
+    minZoom: 0.25,
+    maxZoom: 4,
+    panX: 0,
+    panY: 0,
+    isPanning: false,
+    startX: 0,
+    startY: 0,
+    mapScale: 1.5, // Map is 1.5x larger than viewport
+    isZooming: false,
+    zoomStep: 0.15 // Smoother zoom increments
+};
 
+// Initialize map controls
+function initializeMapControls() {
+    const map = document.getElementById('library-map');
+    const container = document.getElementById('library-map-container');
+    
+    // Improved zoom function - zooms towards a specific point
+    function zoomToPoint(zoomDelta, pointX, pointY) {
+        const oldZoom = mapConfig.zoom;
+        const newZoom = Math.min(Math.max(mapConfig.zoom + zoomDelta, mapConfig.minZoom), mapConfig.maxZoom);
+        
+        if (oldZoom === newZoom) return; // Already at limit
+        
+        const rect = container.getBoundingClientRect();
+        const relativeX = pointX - rect.left;
+        const relativeY = pointY - rect.top;
+        
+        // Calculate zoom factor
+        const zoomFactor = newZoom / oldZoom;
+        
+        // Adjust pan to keep the point under cursor fixed
+        mapConfig.panX = relativeX - (relativeX - mapConfig.panX) * zoomFactor;
+        mapConfig.panY = relativeY - (relativeY - mapConfig.panY) * zoomFactor;
+        
+        mapConfig.zoom = newZoom;
+        updateMapTransform(true);
+        updateZoomIndicator();
+    }
+    
+    // Zoom controls with smooth animation
+    document.getElementById('zoom-in').addEventListener('click', () => {
+        const containerRect = container.getBoundingClientRect();
+        const centerX = containerRect.width / 2;
+        const centerY = containerRect.height / 2;
+        zoomToPoint(mapConfig.zoomStep, centerX, centerY);
+    });
+    
+    document.getElementById('zoom-out').addEventListener('click', () => {
+        const containerRect = container.getBoundingClientRect();
+        const centerX = containerRect.width / 2;
+        const centerY = containerRect.height / 2;
+        zoomToPoint(-mapConfig.zoomStep, centerX, centerY);
+    });
+    
+    document.getElementById('reset-view').addEventListener('click', () => {
+        mapConfig.zoom = 0.8;
+        mapConfig.panX = 0;
+        mapConfig.panY = 0;
+        updateMapTransform(true);
+        updateZoomIndicator();
+    });
+    
+    // Fullscreen functionality
+    const fullscreenBtn = document.getElementById('fullscreen-btn');
+    if (!fullscreenBtn) {
+        console.error('Fullscreen button not found!');
+        return;
+    }
+    
+    // Add click handler with proper event handling
+    fullscreenBtn.addEventListener('click', (e) => {
+        console.log('Fullscreen button clicked!');
+        toggleFullscreen(e);
+    }, { capture: false });
+    
+    // Also handle touch events for mobile
+    fullscreenBtn.addEventListener('touchend', (e) => {
+        e.preventDefault();
+        console.log('Fullscreen button touched!');
+        toggleFullscreen(e);
+    }, { passive: false });
+    
+    // Listen for fullscreen changes
+    document.addEventListener('fullscreenchange', handleFullscreenChange);
+    document.addEventListener('webkitfullscreenchange', handleFullscreenChange);
+    document.addEventListener('mozfullscreenchange', handleFullscreenChange);
+    document.addEventListener('MSFullscreenChange', handleFullscreenChange);
+    
+    function toggleFullscreen(e) {
+        if (e) {
+            e.preventDefault();
+            e.stopPropagation();
+        }
+        
+        if (!container) {
+            console.error('Map container not found!');
+            return;
+        }
+        
+        const isFullscreen = !!(document.fullscreenElement || 
+                                document.webkitFullscreenElement || 
+                                document.mozFullScreenElement || 
+                                document.msFullscreenElement ||
+                                container.classList.contains('fullscreen-active'));
+        
+        console.log('Toggle fullscreen, current state:', isFullscreen);
+        
+        if (!isFullscreen) {
+            // Enter fullscreen
+            // Try standard API first
+            if (container.requestFullscreen) {
+                container.requestFullscreen().catch(err => {
+                    console.log('Fullscreen API error:', err);
+                    // Fallback to manual fullscreen for mobile
+                    enterManualFullscreen();
+                });
+            } else if (container.webkitRequestFullscreen) {
+                // iOS Safari
+                container.webkitRequestFullscreen().catch(err => {
+                    console.log('Webkit fullscreen error:', err);
+                    enterManualFullscreen();
+                });
+            } else if (container.mozRequestFullScreen) {
+                container.mozRequestFullScreen().catch(err => {
+                    console.log('Moz fullscreen error:', err);
+                    enterManualFullscreen();
+                });
+            } else if (container.msRequestFullscreen) {
+                container.msRequestFullscreen().catch(err => {
+                    console.log('MS fullscreen error:', err);
+                    enterManualFullscreen();
+                });
+            } else {
+                // Fallback for browsers that don't support Fullscreen API
+                console.log('No fullscreen API support, using manual fullscreen');
+                enterManualFullscreen();
+            }
+        } else {
+            // Exit fullscreen
+            if (document.exitFullscreen) {
+                document.exitFullscreen().catch(err => {
+                    console.log('Exit fullscreen error:', err);
+                    exitManualFullscreen();
+                });
+            } else if (document.webkitExitFullscreen) {
+                document.webkitExitFullscreen().catch(err => {
+                    console.log('Exit webkit fullscreen error:', err);
+                    exitManualFullscreen();
+                });
+            } else if (document.mozCancelFullScreen) {
+                document.mozCancelFullScreen().catch(err => {
+                    console.log('Exit moz fullscreen error:', err);
+                    exitManualFullscreen();
+                });
+            } else if (document.msExitFullscreen) {
+                document.msExitFullscreen().catch(err => {
+                    console.log('Exit MS fullscreen error:', err);
+                    exitManualFullscreen();
+                });
+            } else {
+                // Exit manual fullscreen
+                exitManualFullscreen();
+            }
+        }
+    }
+    
+    // Manual fullscreen fallback for mobile browsers
+    function enterManualFullscreen() {
+        console.log('Entering manual fullscreen');
+        if (!container) return;
+        container.classList.add('fullscreen-active');
+        document.body.classList.add('map-fullscreen-active');
+        // Prevent body scroll
+        document.body.style.overflow = 'hidden';
+        document.body.style.position = 'fixed';
+        document.body.style.width = '100%';
+        document.body.style.height = '100%';
+        // Update button
+        if (fullscreenBtn) {
+            fullscreenBtn.textContent = '⛶';
+            fullscreenBtn.title = 'Exit Fullscreen';
+        }
+        // Recalculate map size
+        setTimeout(() => {
+            updateMapTransform();
+        }, 100);
+    }
+    
+    function exitManualFullscreen() {
+        console.log('Exiting manual fullscreen');
+        if (!container) return;
+        container.classList.remove('fullscreen-active');
+        document.body.classList.remove('map-fullscreen-active');
+        // Restore body scroll
+        document.body.style.overflow = '';
+        document.body.style.position = '';
+        document.body.style.width = '';
+        document.body.style.height = '';
+        // Update button
+        if (fullscreenBtn) {
+            fullscreenBtn.textContent = '⛶';
+            fullscreenBtn.title = 'Fullscreen';
+        }
+        // Recalculate map size
+        setTimeout(() => {
+            updateMapTransform();
+        }, 100);
+    }
+    
+    function handleFullscreenChange() {
+        const isFullscreen = !!(document.fullscreenElement || 
+                               document.webkitFullscreenElement || 
+                               document.mozFullScreenElement || 
+                               document.msFullscreenElement);
+        
+        console.log('Fullscreen change detected, isFullscreen:', isFullscreen);
+        
+        if (isFullscreen) {
+            container.classList.add('fullscreen-active');
+            document.body.classList.add('map-fullscreen-active');
+            // Prevent body scroll on mobile
+            document.body.style.overflow = 'hidden';
+            if (fullscreenBtn) {
+                fullscreenBtn.textContent = '⛶';
+                fullscreenBtn.title = 'Exit Fullscreen';
+            }
+            // Recalculate map size for fullscreen
+            setTimeout(() => {
+                updateMapTransform();
+            }, 100);
+        } else {
+            container.classList.remove('fullscreen-active');
+            document.body.classList.remove('map-fullscreen-active');
+            // Restore body scroll
+            document.body.style.overflow = '';
+            if (fullscreenBtn) {
+                fullscreenBtn.textContent = '⛶';
+                fullscreenBtn.title = 'Fullscreen';
+            }
+            // Recalculate map size after exiting fullscreen
+            setTimeout(() => {
+                updateMapTransform();
+            }, 100);
+        }
+    }
+    
+    // Handle orientation changes in fullscreen
+    window.addEventListener('orientationchange', () => {
+        if (container.classList.contains('fullscreen-active')) {
+            setTimeout(() => {
+                updateMapTransform();
+            }, 200);
+        }
+    });
+    
+    // Handle resize events for better mobile support
+    let resizeTimeout;
+    window.addEventListener('resize', () => {
+        if (container.classList.contains('fullscreen-active')) {
+            clearTimeout(resizeTimeout);
+            resizeTimeout = setTimeout(() => {
+                updateMapTransform();
+            }, 150);
+        }
+    });
+    
+    // Update fullscreen button state on load
+    handleFullscreenChange();
+    
+    // Double-click to zoom in (desktop only)
+    let lastClickTime = 0;
+    let clickTimeout;
+    container.addEventListener('dblclick', (e) => {
+        if (e.target.closest('.map-seat') || e.target.closest('.map-btn')) return;
+        e.preventDefault();
+        zoomToPoint(mapConfig.zoomStep * 2, e.clientX, e.clientY);
+    });
+    
+    // Enhanced mouse wheel zoom with smooth scaling
+    container.addEventListener('wheel', (e) => {
+        // Allow zoom with Ctrl/Cmd+wheel or just wheel (if not panning)
+        if (e.ctrlKey || e.metaKey || (!e.shiftKey && !e.altKey)) {
+            e.preventDefault();
+            
+            // Calculate zoom delta with exponential scaling for smoother feel
+            // More sensitive for better control
+            const zoomSensitivity = 0.002;
+            const delta = -e.deltaY * zoomSensitivity * mapConfig.zoom;
+            
+            // Zoom towards mouse position
+            zoomToPoint(delta, e.clientX, e.clientY);
+        }
+    }, { passive: false });
+    
+    // Update zoom indicator on initial load
+    setTimeout(() => updateZoomIndicator(), 100);
+    
+    // Pan with mouse drag
+    let isDragging = false;
+    let startPanX = 0;
+    let startPanY = 0;
+    
+    container.addEventListener('mousedown', (e) => {
+        if (e.target.closest('.map-seat') || e.target.closest('.map-btn')) return;
+        isDragging = true;
+        startPanX = e.clientX - mapConfig.panX;
+        startPanY = e.clientY - mapConfig.panY;
+        container.style.cursor = 'grabbing';
+    });
+    
+    document.addEventListener('mousemove', (e) => {
+        if (!isDragging) return;
+        mapConfig.panX = e.clientX - startPanX;
+        mapConfig.panY = e.clientY - startPanY;
+        updateMapTransform();
+    });
+    
+    document.addEventListener('mouseup', () => {
+        isDragging = false;
+        container.style.cursor = 'grab';
+    });
+    
+    // Enhanced touch support for mobile - improved pinch zoom
+    let touchStartX = 0;
+    let touchStartY = 0;
+    let lastDistance = 0;
+    let touchStartTime = 0;
+    let isPinching = false;
+    let initialZoom = 1;
+    let initialPanX = 0;
+    let initialPanY = 0;
+    let initialPinchCenterX = 0;
+    let initialPinchCenterY = 0;
+    
+    // Prevent double-tap zoom on mobile
+    let lastTap = 0;
+    container.addEventListener('touchend', (e) => {
+        const currentTime = new Date().getTime();
+        const tapLength = currentTime - lastTap;
+        if (tapLength < 300 && tapLength > 0 && e.touches.length === 0) {
+            e.preventDefault();
+        }
+        lastTap = currentTime;
+    }, { passive: false });
+    
+    container.addEventListener('touchstart', (e) => {
+        // Don't interfere with seat clicks or button clicks
+        if (e.target.closest('.map-seat') || e.target.closest('.map-btn')) {
+            return;
+        }
+        
+        if (e.touches.length === 1) {
+            // Single touch - pan
+            const touch = e.touches[0];
+            const rect = container.getBoundingClientRect();
+            touchStartX = touch.clientX - rect.left - mapConfig.panX;
+            touchStartY = touch.clientY - rect.top - mapConfig.panY;
+            touchStartTime = Date.now();
+            isDragging = true;
+            isPinching = false;
+            lastDistance = 0;
+        } else if (e.touches.length === 2) {
+            // Two touches - start pinch zoom
+            e.preventDefault();
+            isDragging = false;
+            isPinching = true;
+            
+            const touch1 = e.touches[0];
+            const touch2 = e.touches[1];
+            const rect = container.getBoundingClientRect();
+            
+            // Calculate initial pinch center in container coordinates
+            const centerX = (touch1.clientX + touch2.clientX) / 2;
+            const centerY = (touch1.clientY + touch2.clientY) / 2;
+            initialPinchCenterX = centerX - rect.left;
+            initialPinchCenterY = centerY - rect.top;
+            
+            // Store initial distance and zoom/pan state
+            lastDistance = Math.hypot(touch2.clientX - touch1.clientX, touch2.clientY - touch1.clientY);
+            initialZoom = mapConfig.zoom;
+            initialPanX = mapConfig.panX;
+            initialPanY = mapConfig.panY;
+        }
+    }, { passive: false });
+    
+    container.addEventListener('touchmove', (e) => {
+        // Don't interfere with seat clicks or button clicks
+        if (e.target.closest('.map-seat') || e.target.closest('.map-btn')) {
+            return;
+        }
+        
+        if (e.touches.length === 1 && isDragging && !isPinching) {
+            // Single touch pan
+            e.preventDefault();
+            const touch = e.touches[0];
+            const rect = container.getBoundingClientRect();
+            mapConfig.panX = touch.clientX - rect.left - touchStartX;
+            mapConfig.panY = touch.clientY - rect.top - touchStartY;
+            updateMapTransform();
+        } else if (e.touches.length === 2) {
+            // Pinch zoom - always prevent default for smooth operation
+            e.preventDefault();
+            
+            const touch1 = e.touches[0];
+            const touch2 = e.touches[1];
+            const distance = Math.hypot(touch2.clientX - touch1.clientX, touch2.clientY - touch1.clientY);
+            
+            // Initialize if this is the first move after touchstart
+            if (lastDistance === 0 || !isPinching) {
+                const rect = container.getBoundingClientRect();
+                const centerX = (touch1.clientX + touch2.clientX) / 2;
+                const centerY = (touch1.clientY + touch2.clientY) / 2;
+                initialPinchCenterX = centerX - rect.left;
+                initialPinchCenterY = centerY - rect.top;
+                lastDistance = distance;
+                initialZoom = mapConfig.zoom;
+                initialPanX = mapConfig.panX;
+                initialPanY = mapConfig.panY;
+                isPinching = true;
+                return;
+            }
+            
+            // Calculate zoom based on distance change
+            const scale = distance / lastDistance;
+            const newZoom = Math.min(Math.max(initialZoom * scale, mapConfig.minZoom), mapConfig.maxZoom);
+            const zoomFactor = newZoom / initialZoom;
+            
+            // Adjust pan to keep the initial pinch center point fixed
+            // This ensures zoom happens toward the point where pinch started
+            mapConfig.panX = initialPinchCenterX - (initialPinchCenterX - initialPanX) * zoomFactor;
+            mapConfig.panY = initialPinchCenterY - (initialPinchCenterY - initialPanY) * zoomFactor;
+            
+            mapConfig.zoom = newZoom;
+            updateMapTransform();
+            updateZoomIndicator();
+            
+            lastDistance = distance;
+        }
+    }, { passive: false });
+    
+    container.addEventListener('touchend', (e) => {
+        if (e.touches.length === 0) {
+            // All touches ended
+            isDragging = false;
+            isPinching = false;
+            lastDistance = 0;
+        } else if (e.touches.length === 1) {
+            // One touch remaining, switch to pan mode
+            isPinching = false;
+            const touch = e.touches[0];
+            const rect = container.getBoundingClientRect();
+            touchStartX = touch.clientX - rect.left - mapConfig.panX;
+            touchStartY = touch.clientY - rect.top - mapConfig.panY;
+            isDragging = true;
+            lastDistance = 0;
+        } else if (e.touches.length === 2) {
+            // Still two touches - continue pinch
+            // Recalculate initial values for the remaining touches
+            const touch1 = e.touches[0];
+            const touch2 = e.touches[1];
+            const rect = container.getBoundingClientRect();
+            const centerX = (touch1.clientX + touch2.clientX) / 2;
+            const centerY = (touch1.clientY + touch2.clientY) / 2;
+            initialPinchCenterX = centerX - rect.left;
+            initialPinchCenterY = centerY - rect.top;
+            lastDistance = Math.hypot(touch2.clientX - touch1.clientX, touch2.clientY - touch1.clientY);
+            initialZoom = mapConfig.zoom;
+            initialPanX = mapConfig.panX;
+            initialPanY = mapConfig.panY;
+        }
+    }, { passive: false });
+}
+
+function updateMapTransform(animate = false) {
+    const map = document.getElementById('library-map');
+    const container = document.getElementById('library-map-container');
+    
+    // Add smooth transition for zoom operations
+    if (animate) {
+        map.style.transition = 'transform 0.4s cubic-bezier(0.4, 0, 0.2, 1)';
+    } else {
+        map.style.transition = 'transform 0.1s cubic-bezier(0.4, 0, 0.2, 1)';
+    }
+    
+    // Constrain panning to keep map within reasonable bounds
+    const containerRect = container.getBoundingClientRect();
+    const scaledWidth = containerRect.width * mapConfig.mapScale * mapConfig.zoom;
+    const scaledHeight = containerRect.height * mapConfig.mapScale * mapConfig.zoom;
+    
+    // Limit panning to map boundaries
+    const maxPanX = Math.max(0, (scaledWidth - containerRect.width) / (2 * mapConfig.zoom));
+    const maxPanY = Math.max(0, (scaledHeight - containerRect.height) / (2 * mapConfig.zoom));
+    
+    mapConfig.panX = Math.max(-maxPanX, Math.min(maxPanX, mapConfig.panX));
+    mapConfig.panY = Math.max(-maxPanY, Math.min(maxPanY, mapConfig.panY));
+    
+    // Apply transform with zoom and pan
+    map.style.transform = `translate(${mapConfig.panX}px, ${mapConfig.panY}px) scale(${mapConfig.zoom})`;
+    
+    // Remove transition after animation completes
+    if (animate) {
+        setTimeout(() => {
+            map.style.transition = 'transform 0.1s cubic-bezier(0.4, 0, 0.2, 1)';
+        }, 400);
+    }
+}
+
+// Update zoom level indicator
+function updateZoomIndicator() {
+    const zoomPercent = Math.round(mapConfig.zoom * 100);
+    const indicator = document.getElementById('zoom-indicator');
+    if (indicator) {
+        indicator.textContent = `${zoomPercent}%`;
+        
+        // Update button states
+        const zoomInBtn = document.getElementById('zoom-in');
+        const zoomOutBtn = document.getElementById('zoom-out');
+        
+        if (zoomInBtn) {
+            zoomInBtn.disabled = mapConfig.zoom >= mapConfig.maxZoom;
+            zoomInBtn.style.opacity = mapConfig.zoom >= mapConfig.maxZoom ? '0.5' : '1';
+        }
+        if (zoomOutBtn) {
+            zoomOutBtn.disabled = mapConfig.zoom <= mapConfig.minZoom;
+            zoomOutBtn.style.opacity = mapConfig.zoom <= mapConfig.minZoom ? '0.5' : '1';
+        }
+    }
+}
+
+// Floor-specific map layouts - complete floor plans showing all rooms
+const floorLayouts = {
+    '1/F': {
+        // Seat zones
+        quiet: { 
+            x: 5, y: 8, width: 32, height: 45, 
+            label: 'Quiet Zone',
+            shape: 'l-shape',
+            clipPath: 'polygon(0% 0%, 100% 0%, 100% 80%, 70% 80%, 70% 100%, 0% 100%)',
+            type: 'seat-zone'
+        },
+        group: { 
+            x: 40, y: 8, width: 28, height: 45, 
+            label: 'Group Study',
+            shape: 'rectangle',
+            clipPath: 'polygon(0% 0%, 100% 0%, 100% 100%, 0% 100%)',
+            type: 'seat-zone'
+        },
+        computer: { 
+            x: 71, y: 8, width: 26, height: 45, 
+            label: 'Computer Zone',
+            shape: 'rectangle',
+            clipPath: 'polygon(0% 0%, 100% 0%, 100% 100%, 0% 100%)',
+            type: 'seat-zone'
+        },
+        // Facilities
+        facilities: [
+            { x: 5, y: 55, width: 12, height: 15, label: 'Staff Room', type: 'staff' },
+            { x: 20, y: 55, width: 10, height: 15, label: 'Toilet', type: 'toilet' },
+            { x: 33, y: 55, width: 10, height: 15, label: 'Toilet', type: 'toilet' },
+            { x: 46, y: 55, width: 12, height: 15, label: 'Storage', type: 'storage' },
+            { x: 61, y: 55, width: 10, height: 15, label: 'Toilet', type: 'toilet' },
+            { x: 74, y: 55, width: 10, height: 15, label: 'Toilet', type: 'toilet' },
+            { x: 87, y: 55, width: 10, height: 15, label: 'Stairs', type: 'stairs' }
+        ],
+        corridors: [
+            { x: 37, y: 8, width: 3, height: 45, type: 'vertical' },
+            { x: 68, y: 8, width: 3, height: 45, type: 'vertical' },
+            { x: 5, y: 53, width: 92, height: 2, type: 'horizontal' },
+            { x: 17, y: 55, width: 3, height: 15, type: 'vertical' },
+            { x: 30, y: 55, width: 3, height: 15, type: 'vertical' },
+            { x: 43, y: 55, width: 3, height: 15, type: 'vertical' },
+            { x: 58, y: 55, width: 3, height: 15, type: 'vertical' },
+            { x: 71, y: 55, width: 3, height: 15, type: 'vertical' },
+            { x: 84, y: 55, width: 3, height: 15, type: 'vertical' }
+        ],
+        entrances: [
+            { x: 48, y: 0, width: 4, height: 2, type: 'main' },
+            { x: 25, y: 0, width: 3, height: 2, type: 'side' }
+        ]
+    },
+    'G/F': {
+        quiet: { 
+            x: 5, y: 10, width: 30, height: 40, 
+            label: 'Quiet Zone',
+            shape: 'rectangle',
+            clipPath: 'polygon(0% 0%, 100% 0%, 100% 100%, 0% 100%)',
+            type: 'seat-zone'
+        },
+        group: { 
+            x: 38, y: 10, width: 33, height: 40, 
+            label: 'Group Study',
+            shape: 'u-shape',
+            clipPath: 'polygon(0% 0%, 100% 0%, 100% 100%, 18% 100%, 18% 72%, 82% 72%, 82% 100%, 0% 100%)',
+            type: 'seat-zone'
+        },
+        computer: { 
+            x: 74, y: 10, width: 23, height: 40, 
+            label: 'Computer Zone',
+            shape: 'rectangle',
+            clipPath: 'polygon(0% 0%, 100% 0%, 100% 100%, 0% 100%)',
+            type: 'seat-zone'
+        },
+        facilities: [
+            { x: 5, y: 52, width: 15, height: 18, label: 'Reception', type: 'reception' },
+            { x: 23, y: 52, width: 10, height: 18, label: 'Toilet', type: 'toilet' },
+            { x: 36, y: 52, width: 10, height: 18, label: 'Toilet', type: 'toilet' },
+            { x: 49, y: 52, width: 12, height: 18, label: 'Staff Room', type: 'staff' },
+            { x: 64, y: 52, width: 10, height: 18, label: 'Toilet', type: 'toilet' },
+            { x: 77, y: 52, width: 10, height: 18, label: 'Toilet', type: 'toilet' },
+            { x: 90, y: 52, width: 7, height: 18, label: 'Elevator', type: 'elevator' }
+        ],
+        corridors: [
+            { x: 35, y: 10, width: 3, height: 40, type: 'vertical' },
+            { x: 71, y: 10, width: 3, height: 40, type: 'vertical' },
+            { x: 5, y: 50, width: 92, height: 2, type: 'horizontal' },
+            { x: 20, y: 52, width: 3, height: 18, type: 'vertical' },
+            { x: 33, y: 52, width: 3, height: 18, type: 'vertical' },
+            { x: 46, y: 52, width: 3, height: 18, type: 'vertical' },
+            { x: 61, y: 52, width: 3, height: 18, type: 'vertical' },
+            { x: 74, y: 52, width: 3, height: 18, type: 'vertical' },
+            { x: 87, y: 52, width: 3, height: 18, type: 'vertical' }
+        ],
+        entrances: [
+            { x: 47, y: 0, width: 6, height: 3, type: 'main' }
+        ]
+    },
+    'LG1': {
+        quiet: { 
+            x: 5, y: 5, width: 33, height: 50, 
+            label: 'Quiet Zone',
+            shape: 't-shape',
+            clipPath: 'polygon(0% 0%, 58% 0%, 58% 38%, 100% 38%, 100% 100%, 0% 100%)',
+            type: 'seat-zone'
+        },
+        group: { 
+            x: 41, y: 5, width: 30, height: 50, 
+            label: 'Group Study',
+            shape: 'rectangle',
+            clipPath: 'polygon(0% 0%, 100% 0%, 100% 100%, 0% 100%)',
+            type: 'seat-zone'
+        },
+        computer: { 
+            x: 74, y: 5, width: 23, height: 50, 
+            label: 'Computer Zone',
+            shape: 'rectangle',
+            clipPath: 'polygon(0% 0%, 100% 0%, 100% 100%, 0% 100%)',
+            type: 'seat-zone'
+        },
+        facilities: [
+            { x: 5, y: 57, width: 12, height: 15, label: 'Staff Room', type: 'staff' },
+            { x: 20, y: 57, width: 10, height: 15, label: 'Toilet', type: 'toilet' },
+            { x: 33, y: 57, width: 10, height: 15, label: 'Storage', type: 'storage' },
+            { x: 46, y: 57, width: 10, height: 15, label: 'Toilet', type: 'toilet' },
+            { x: 59, y: 57, width: 12, height: 15, label: 'Storage', type: 'storage' },
+            { x: 74, y: 57, width: 10, height: 15, label: 'Toilet', type: 'toilet' },
+            { x: 87, y: 57, width: 10, height: 15, label: 'Stairs', type: 'stairs' }
+        ],
+        corridors: [
+            { x: 38, y: 5, width: 3, height: 50, type: 'vertical' },
+            { x: 71, y: 5, width: 3, height: 50, type: 'vertical' },
+            { x: 5, y: 55, width: 92, height: 2, type: 'horizontal' },
+            { x: 17, y: 57, width: 3, height: 15, type: 'vertical' },
+            { x: 30, y: 57, width: 3, height: 15, type: 'vertical' },
+            { x: 43, y: 57, width: 3, height: 15, type: 'vertical' },
+            { x: 56, y: 57, width: 3, height: 15, type: 'vertical' },
+            { x: 71, y: 57, width: 3, height: 15, type: 'vertical' },
+            { x: 84, y: 57, width: 3, height: 15, type: 'vertical' }
+        ],
+        entrances: [
+            { x: 50, y: 0, width: 4, height: 2, type: 'main' }
+        ]
+    },
+    'LG3': {
+        quiet: { 
+            x: 5, y: 8, width: 28, height: 40, 
+            label: 'Quiet Zone',
+            shape: 'rectangle',
+            clipPath: 'polygon(0% 0%, 100% 0%, 100% 100%, 0% 100%)',
+            type: 'seat-zone'
+        },
+        group: { 
+            x: 36, y: 8, width: 36, height: 40, 
+            label: 'Group Study',
+            shape: 'l-shape',
+            clipPath: 'polygon(0% 0%, 100% 0%, 100% 58%, 68% 58%, 68% 100%, 0% 100%)',
+            type: 'seat-zone'
+        },
+        computer: { 
+            x: 75, y: 8, width: 22, height: 40, 
+            label: 'Computer Zone',
+            shape: 'rectangle',
+            clipPath: 'polygon(0% 0%, 100% 0%, 100% 100%, 0% 100%)',
+            type: 'seat-zone'
+        },
+        facilities: [
+            { x: 5, y: 50, width: 12, height: 18, label: 'Staff Room', type: 'staff' },
+            { x: 20, y: 50, width: 10, height: 18, label: 'Toilet', type: 'toilet' },
+            { x: 33, y: 50, width: 10, height: 18, label: 'Toilet', type: 'toilet' },
+            { x: 46, y: 50, width: 12, height: 18, label: 'Storage', type: 'storage' },
+            { x: 61, y: 50, width: 10, height: 18, label: 'Toilet', type: 'toilet' },
+            { x: 74, y: 50, width: 10, height: 18, label: 'Toilet', type: 'toilet' },
+            { x: 87, y: 50, width: 10, height: 18, label: 'Stairs', type: 'stairs' }
+        ],
+        corridors: [
+            { x: 33, y: 8, width: 3, height: 40, type: 'vertical' },
+            { x: 72, y: 8, width: 3, height: 40, type: 'vertical' },
+            { x: 5, y: 48, width: 92, height: 2, type: 'horizontal' },
+            { x: 17, y: 50, width: 3, height: 18, type: 'vertical' },
+            { x: 30, y: 50, width: 3, height: 18, type: 'vertical' },
+            { x: 43, y: 50, width: 3, height: 18, type: 'vertical' },
+            { x: 58, y: 50, width: 3, height: 18, type: 'vertical' },
+            { x: 71, y: 50, width: 3, height: 18, type: 'vertical' },
+            { x: 84, y: 50, width: 3, height: 18, type: 'vertical' }
+        ],
+        entrances: [
+            { x: 48, y: 0, width: 4, height: 2, type: 'main' }
+        ]
+    },
+    'LG4': {
+        quiet: { 
+            x: 5, y: 8, width: 34, height: 42, 
+            label: 'Quiet Zone',
+            shape: 'u-shape',
+            clipPath: 'polygon(0% 0%, 100% 0%, 100% 100%, 22% 100%, 22% 76%, 78% 76%, 78% 100%, 0% 100%)',
+            type: 'seat-zone'
+        },
+        group: { 
+            x: 42, y: 8, width: 28, height: 42, 
+            label: 'Group Study',
+            shape: 'rectangle',
+            clipPath: 'polygon(0% 0%, 100% 0%, 100% 100%, 0% 100%)',
+            type: 'seat-zone'
+        },
+        computer: { 
+            x: 73, y: 8, width: 24, height: 42, 
+            label: 'Computer Zone',
+            shape: 'rectangle',
+            clipPath: 'polygon(0% 0%, 100% 0%, 100% 100%, 0% 100%)',
+            type: 'seat-zone'
+        },
+        facilities: [
+            { x: 5, y: 52, width: 12, height: 16, label: 'Staff Room', type: 'staff' },
+            { x: 20, y: 52, width: 10, height: 16, label: 'Toilet', type: 'toilet' },
+            { x: 33, y: 52, width: 10, height: 16, label: 'Toilet', type: 'toilet' },
+            { x: 46, y: 52, width: 12, height: 16, label: 'Storage', type: 'storage' },
+            { x: 61, y: 52, width: 10, height: 16, label: 'Toilet', type: 'toilet' },
+            { x: 74, y: 52, width: 10, height: 16, label: 'Toilet', type: 'toilet' },
+            { x: 87, y: 52, width: 10, height: 16, label: 'Stairs', type: 'stairs' }
+        ],
+        corridors: [
+            { x: 39, y: 8, width: 3, height: 42, type: 'vertical' },
+            { x: 70, y: 8, width: 3, height: 42, type: 'vertical' },
+            { x: 5, y: 50, width: 92, height: 2, type: 'horizontal' },
+            { x: 17, y: 52, width: 3, height: 16, type: 'vertical' },
+            { x: 30, y: 52, width: 3, height: 16, type: 'vertical' },
+            { x: 43, y: 52, width: 3, height: 16, type: 'vertical' },
+            { x: 58, y: 52, width: 3, height: 16, type: 'vertical' },
+            { x: 71, y: 52, width: 3, height: 16, type: 'vertical' },
+            { x: 84, y: 52, width: 3, height: 16, type: 'vertical' }
+        ],
+        entrances: [
+            { x: 49, y: 0, width: 4, height: 2, type: 'main' }
+        ]
+    },
+    'LG5': {
+        quiet: { 
+            x: 5, y: 8, width: 32, height: 38, 
+            label: 'Quiet Zone',
+            shape: 'rectangle',
+            clipPath: 'polygon(0% 0%, 100% 0%, 100% 100%, 0% 100%)',
+            type: 'seat-zone'
+        },
+        group: { 
+            x: 40, y: 8, width: 31, height: 38, 
+            label: 'Group Study',
+            shape: 't-shape',
+            clipPath: 'polygon(0% 0%, 63% 0%, 63% 34%, 100% 34%, 100% 100%, 0% 100%)',
+            type: 'seat-zone'
+        },
+        computer: { 
+            x: 74, y: 8, width: 23, height: 38, 
+            label: 'Computer Zone',
+            shape: 'rectangle',
+            clipPath: 'polygon(0% 0%, 100% 0%, 100% 100%, 0% 100%)',
+            type: 'seat-zone'
+        },
+        facilities: [
+            { x: 5, y: 48, width: 12, height: 20, label: 'Staff Room', type: 'staff' },
+            { x: 20, y: 48, width: 10, height: 20, label: 'Toilet', type: 'toilet' },
+            { x: 33, y: 48, width: 10, height: 20, label: 'Toilet', type: 'toilet' },
+            { x: 46, y: 48, width: 12, height: 20, label: 'Storage', type: 'storage' },
+            { x: 61, y: 48, width: 10, height: 20, label: 'Toilet', type: 'toilet' },
+            { x: 74, y: 48, width: 10, height: 20, label: 'Toilet', type: 'toilet' },
+            { x: 87, y: 48, width: 10, height: 20, label: 'Stairs', type: 'stairs' }
+        ],
+        corridors: [
+            { x: 37, y: 8, width: 3, height: 38, type: 'vertical' },
+            { x: 71, y: 8, width: 3, height: 38, type: 'vertical' },
+            { x: 5, y: 46, width: 92, height: 2, type: 'horizontal' },
+            { x: 17, y: 48, width: 3, height: 20, type: 'vertical' },
+            { x: 30, y: 48, width: 3, height: 20, type: 'vertical' },
+            { x: 43, y: 48, width: 3, height: 20, type: 'vertical' },
+            { x: 58, y: 48, width: 3, height: 20, type: 'vertical' },
+            { x: 71, y: 48, width: 3, height: 20, type: 'vertical' },
+            { x: 84, y: 48, width: 3, height: 20, type: 'vertical' }
+        ],
+        entrances: [
+            { x: 48, y: 0, width: 4, height: 2, type: 'main' }
+        ]
+    }
+};
+
+// Default layout (fallback)
+const defaultLayout = {
+    quiet: { 
+        x: 5, y: 5, width: 30, height: 40, 
+        label: 'Quiet Zone',
+        shape: 'rectangle',
+        clipPath: 'polygon(0% 0%, 100% 0%, 100% 100%, 0% 100%)'
+    },
+    group: { 
+        x: 40, y: 5, width: 30, height: 40, 
+        label: 'Group Study',
+        shape: 'rectangle',
+        clipPath: 'polygon(0% 0%, 100% 0%, 100% 100%, 0% 100%)'
+    },
+    computer: { 
+        x: 75, y: 5, width: 20, height: 40, 
+        label: 'Computer Zone',
+        shape: 'rectangle',
+        clipPath: 'polygon(0% 0%, 100% 0%, 100% 100%, 0% 100%)'
+    },
+    corridors: []
+};
+
+// Generate library map structure
+function generateLibraryMap() {
+    const mapZones = document.getElementById('map-zones');
+    const mapLabels = document.getElementById('map-labels');
+    const floorFilter = document.getElementById('floor-filter').value;
+    
+    // Clear existing content
+    mapZones.innerHTML = '';
+    mapLabels.innerHTML = '';
+    
+    // Get layout for selected floor (always a specific floor)
+    const layout = floorLayouts[floorFilter] || defaultLayout;
+    const { quiet, group, computer, corridors = [], facilities = [], entrances = [] } = layout;
+    
+    // Create corridors first (so they appear behind everything)
+    corridors.forEach(corridor => {
+        const corridorEl = document.createElement('div');
+        corridorEl.className = 'map-corridor';
+        corridorEl.style.left = `${corridor.x}%`;
+        corridorEl.style.top = `${corridor.y}%`;
+        corridorEl.style.width = `${corridor.width}%`;
+        corridorEl.style.height = `${corridor.height}%`;
+        mapZones.appendChild(corridorEl);
+    });
+    
+    // Create seat zones with custom shapes
+    [quiet, group, computer].forEach(config => {
+        if (!config) return;
+        
+        const zone = document.createElement('div');
+        const zoneName = config === quiet ? 'quiet' : config === group ? 'group' : 'computer';
+        zone.className = `map-zone zone-${zoneName}`;
+        zone.style.left = `${config.x}%`;
+        zone.style.top = `${config.y}%`;
+        zone.style.width = `${config.width}%`;
+        zone.style.height = `${config.height}%`;
+        
+        // Apply custom clip-path for varied shapes
+        if (config.clipPath) {
+            zone.style.clipPath = config.clipPath;
+            zone.style.webkitClipPath = config.clipPath;
+        }
+        
+        mapZones.appendChild(zone);
+        
+        // Add zone label - position at top center of zone
+        const label = document.createElement('div');
+        label.className = 'zone-label';
+        label.textContent = config.label;
+        label.style.left = `${config.x + config.width / 2}%`;
+        label.style.top = `${config.y + 1}%`;
+        label.style.transform = 'translateX(-50%)';
+        mapLabels.appendChild(label);
+    });
+    
+    // Create facilities (staff rooms, toilets, etc.)
+    facilities.forEach(facility => {
+        const facilityEl = document.createElement('div');
+        facilityEl.className = `map-facility facility-${facility.type}`;
+        facilityEl.style.left = `${facility.x}%`;
+        facilityEl.style.top = `${facility.y}%`;
+        facilityEl.style.width = `${facility.width}%`;
+        facilityEl.style.height = `${facility.height}%`;
+        mapZones.appendChild(facilityEl);
+        
+        // Add facility label - position at center of facility
+        const label = document.createElement('div');
+        label.className = 'facility-label';
+        label.textContent = facility.label;
+        label.style.left = `${facility.x + facility.width / 2}%`;
+        label.style.top = `${facility.y + facility.height / 2}%`;
+        label.style.transform = 'translate(-50%, -50%)';
+        mapLabels.appendChild(label);
+    });
+    
+    // Create entrances
+    entrances.forEach(entrance => {
+        const entranceEl = document.createElement('div');
+        entranceEl.className = `map-entrance entrance-${entrance.type}`;
+        entranceEl.style.left = `${entrance.x}%`;
+        entranceEl.style.top = `${entrance.y}%`;
+        entranceEl.style.width = `${entrance.width}%`;
+        entranceEl.style.height = `${entrance.height}%`;
+        mapZones.appendChild(entranceEl);
+    });
+    
+    // Add structural elements (columns, walls)
+    addStructuralElements(mapZones, floorFilter);
+}
+
+// Add structural elements to make it look more realistic
+function addStructuralElements(container, floor) {
+    // Add columns at strategic positions (varied by floor)
+    const columnPositions = {
+        '1/F': [
+            { x: 18, y: 28, size: 1.2 },
+            { x: 48, y: 32, size: 1.2 },
+            { x: 78, y: 28, size: 1.2 },
+            { x: 32, y: 62, size: 1.2 },
+            { x: 68, y: 62, size: 1.2 }
+        ],
+        'G/F': [
+            { x: 20, y: 30, size: 1.2 },
+            { x: 50, y: 32, size: 1.2 },
+            { x: 80, y: 30, size: 1.2 },
+            { x: 35, y: 60, size: 1.2 },
+            { x: 65, y: 60, size: 1.2 }
+        ],
+        'LG1': [
+            { x: 19, y: 30, size: 1.2 },
+            { x: 48, y: 32, size: 1.2 },
+            { x: 78, y: 30, size: 1.2 },
+            { x: 33, y: 64, size: 1.2 },
+            { x: 67, y: 64, size: 1.2 }
+        ],
+        'LG3': [
+            { x: 18, y: 28, size: 1.2 },
+            { x: 50, y: 30, size: 1.2 },
+            { x: 80, y: 28, size: 1.2 },
+            { x: 35, y: 58, size: 1.2 },
+            { x: 65, y: 58, size: 1.2 }
+        ],
+        'LG4': [
+            { x: 20, y: 28, size: 1.2 },
+            { x: 50, y: 30, size: 1.2 },
+            { x: 78, y: 28, size: 1.2 },
+            { x: 35, y: 60, size: 1.2 },
+            { x: 65, y: 60, size: 1.2 }
+        ],
+        'LG5': [
+            { x: 19, y: 26, size: 1.2 },
+            { x: 50, y: 28, size: 1.2 },
+            { x: 79, y: 26, size: 1.2 },
+            { x: 35, y: 56, size: 1.2 },
+            { x: 65, y: 56, size: 1.2 }
+        ]
+    };
+    
+    const columns = columnPositions[floor] || columnPositions['1/F'];
+    
+    columns.forEach(col => {
+        const column = document.createElement('div');
+        column.className = 'map-column';
+        column.style.left = `${col.x}%`;
+        column.style.top = `${col.y}%`;
+        column.style.width = `${col.size}%`;
+        column.style.height = `${col.size}%`;
+        container.appendChild(column);
+    });
+}
+
+// Calculate seat positions within zones
+function getSeatPosition(seat, index, totalInZone) {
+    const floorFilter = document.getElementById('floor-filter').value;
+    
+    // Get layout for selected floor (always a specific floor)
+    const layout = floorLayouts[floorFilter] || defaultLayout;
+    const config = layout[seat.zone];
+    if (!config) return { x: 0, y: 0, width: 3, height: 3 };
+    
+    // Arrange seats in a grid within the zone
+    // More columns for larger zones, fewer for computer zone
+    const cols = seat.zone === 'computer' ? 2 : (seat.zone === 'group' ? 4 : 3);
+    const rows = Math.ceil(totalInZone / cols);
+    const col = index % cols;
+    const row = Math.floor(index / cols);
+    
+    // Calculate position with padding (seats arranged like tables in a library)
+    const padding = 1.5;
+    const seatWidth = Math.max(3, (config.width - padding * (cols + 1)) / cols);
+    const seatHeight = Math.max(3, (config.height - padding * (rows + 1)) / rows);
+    
+    const x = config.x + padding + col * (seatWidth + padding);
+    const y = config.y + padding + row * (seatHeight + padding);
+    
+    return { x, y, width: seatWidth, height: seatHeight };
+}
+
+// Render seats on map
+function renderSeats() {
+    const floorFilter = document.getElementById('floor-filter').value;
+
+    // Filter by selected floor - show all zones and all statuses on the selected floor
+    // Status is already color-coded on the map
     const filteredSeats = seats.filter(seat => {
-        const floorMatch = floorFilter === 'all' || seat.floor === floorFilter;
-        const zoneMatch = zoneFilter === 'all' || seat.zone === zoneFilter;
-        const statusMatch = statusFilter === 'all' || seat.status === statusFilter;
-        return floorMatch && zoneMatch && statusMatch;
+        return seat.floor === floorFilter;
     });
 
-    grid.innerHTML = filteredSeats.map(seat => {
+    // Group seats by zone
+    const seatsByZone = {};
+    filteredSeats.forEach(seat => {
+        if (!seatsByZone[seat.zone]) {
+            seatsByZone[seat.zone] = [];
+        }
+        seatsByZone[seat.zone].push(seat);
+    });
+
+    // Clear existing seats
+    document.querySelectorAll('.map-seat').forEach(seat => seat.remove());
+
+    // Render seats in each zone
+    Object.entries(seatsByZone).forEach(([zone, zoneSeats]) => {
+        zoneSeats.forEach((seat, index) => {
+            const position = getSeatPosition(seat, index, zoneSeats.length);
         const timeText = seat.status === 'occupied' || seat.status === 'hogging' ? 
             `${seat.occupiedTime}m` : '';
         
-        return `
-            <div class="seat ${seat.status}" data-seat-id="${seat.id}">
+            const seatEl = document.createElement('div');
+            seatEl.className = `map-seat seat-${seat.status}`;
+            seatEl.dataset.seatId = seat.id;
+            seatEl.style.left = `${position.x}%`;
+            seatEl.style.top = `${position.y}%`;
+            seatEl.style.width = `${position.width}%`;
+            seatEl.style.height = `${position.height}%`;
+            
+            seatEl.innerHTML = `
                 <div class="seat-id">${seat.id}</div>
-                <div class="seat-status">${getStatusText(seat.status)}</div>
-                ${timeText ? `<div class="seat-time">${timeText}</div>` : ''}
                 ${seat.status === 'hogging' ? '<div class="seat-badge">⚠️</div>' : ''}
-            </div>
+                ${timeText ? `<div class="seat-time">${timeText}</div>` : ''}
         `;
-    }).join('');
 
-    // Add click handlers
-    grid.querySelectorAll('.seat').forEach(seatEl => {
+            // Add click handler
         seatEl.addEventListener('click', () => {
-            const seatId = seatEl.dataset.seatId;
-            const seat = seats.find(s => s.id === seatId);
-            if (seat) {
                 showSeatDetails(seat);
-            }
+            });
+            
+            document.getElementById('map-zones').appendChild(seatEl);
         });
     });
 }
@@ -463,10 +1502,13 @@ function initializeCharts() {
 // Fullscreen functionality - Mobile and Desktop with real API
 function toggleFullscreen() {
     const container = document.getElementById('camera-feed-container');
-    const btn = document.getElementById('fullscreen-btn');
+    const btn = document.getElementById('camera-fullscreen-btn');
     const icon = btn?.querySelector('.fullscreen-icon');
     
-    if (!container || !icon) return;
+    if (!container || !btn || !icon) {
+        console.error('Camera fullscreen elements not found:', { container: !!container, btn: !!btn, icon: !!icon });
+        return;
+    }
     
     // Check if currently in fullscreen
     const isFullscreen = container.classList.contains('fullscreen') ||
@@ -586,6 +1628,29 @@ function toggleFullscreen() {
     }
 }
 
+// Attach event listener to camera fullscreen button
+document.addEventListener('DOMContentLoaded', () => {
+    const cameraFullscreenBtn = document.getElementById('camera-fullscreen-btn');
+    if (cameraFullscreenBtn) {
+        cameraFullscreenBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            console.log('Camera fullscreen button clicked!');
+            toggleFullscreen();
+        });
+        
+        // Also handle touch events for mobile
+        cameraFullscreenBtn.addEventListener('touchend', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            console.log('Camera fullscreen button touched!');
+            toggleFullscreen();
+        }, { passive: false });
+    } else {
+        console.warn('Camera fullscreen button not found!');
+    }
+});
+
 // Handle fullscreen change events (for all browsers including mobile)
 document.addEventListener('fullscreenchange', handleFullscreenChange);
 document.addEventListener('webkitfullscreenchange', handleFullscreenChange);
@@ -597,9 +1662,10 @@ document.addEventListener('webkitendfullscreen', handleFullscreenChange);
 
 function handleFullscreenChange(event) {
     const container = document.getElementById('camera-feed-container');
-    const icon = document.querySelector('.fullscreen-icon');
+    const btn = document.getElementById('camera-fullscreen-btn');
+    const icon = btn?.querySelector('.fullscreen-icon');
     
-    if (!container || !icon) return;
+    if (!container || !btn || !icon) return;
     
     // Check all possible fullscreen states
     const isInNativeFullscreen = document.fullscreenElement || 
@@ -634,7 +1700,8 @@ function handleFullscreenChange(event) {
 document.addEventListener('keydown', (e) => {
     if (e.key === 'Escape' || e.key === 'Esc') {
         const container = document.getElementById('camera-feed-container');
-        const icon = document.querySelector('.fullscreen-icon');
+        const btn = document.getElementById('camera-fullscreen-btn');
+        const icon = btn?.querySelector('.fullscreen-icon');
         
         if (container?.classList.contains('fullscreen')) {
             container.classList.remove('fullscreen');

@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     
     <!-- Mobile fullscreen support -->
@@ -60,34 +60,39 @@
             <!-- Dashboard Tab -->
             <div class="tab-content active" id="dashboard">
                 <div class="page-header">
-                    <h2>Seat Status</h2>
+                    <h2>Library Floor Plan</h2>
                     <div class="filter-chips">
-                        <select id="status-filter" class="filter-chip" aria-label="Filter by status">
-                            <option value="all">All Status</option>
-                            <option value="reserved">Reserved</option>
-                            <option value="available">Available</option>
-                            <option value="hogging">Hogging</option>
-                            <option value="occupied">Occupied</option>
-                        </select>
-                        <select id="floor-filter" class="filter-chip" aria-label="Filter by floor">
-                            <option value="all">All Floors</option>
-                            <option value="G">Ground</option>
-                            <option value="1">1F</option>
-                            <option value="2">2F</option>
-                            <option value="3">3F</option>
-                        </select>
-                        <select id="zone-filter" class="filter-chip" aria-label="Filter by zone">
-                            <option value="all">All Zones</option>
-                            <option value="quiet">Quiet</option>
-                            <option value="group">Group</option>
-                            <option value="computer">Computer</option>
+                        <select id="floor-filter" class="filter-chip" aria-label="Select floor">
+                            <option value="1/F" selected>1/F</option>
+                            <option value="G/F">G/F</option>
+                            <option value="LG1">LG1</option>
+                            <option value="LG3">LG3</option>
+                            <option value="LG4">LG4</option>
+                            <option value="LG5">LG5</option>
                         </select>
                     </div>
                 </div>
 
-            <div class="seat-grid" id="seat-grid">
-                <!-- Seats will be dynamically generated -->
-            </div>
+                <div class="map-controls">
+                    <button class="map-btn" id="zoom-in" title="Zoom In">+</button>
+                    <button class="map-btn" id="zoom-out" title="Zoom Out">−</button>
+                    <button class="map-btn" id="reset-view" title="Reset View">⌂</button>
+                    <button class="map-btn" id="fullscreen-btn" title="Fullscreen">⛶</button>
+                    <div class="zoom-indicator" id="zoom-indicator">80%</div>
+                </div>
+
+                <div class="library-map-container" id="library-map-container">
+                    <div class="library-map" id="library-map">
+                        <!-- Library structure will be generated here -->
+                        <div class="map-walls"></div>
+                        <div class="map-zones" id="map-zones">
+                            <!-- Zones and seats will be dynamically generated -->
+                        </div>
+                        <div class="map-labels" id="map-labels">
+                            <!-- Zone labels will be generated here -->
+                        </div>
+                    </div>
+                </div>
 
                 <div class="legend-mobile">
                     <div class="legend-item">
@@ -127,7 +132,7 @@
                     </div>
 
                 <div class="camera-feed-container" id="camera-feed-container">
-                    <button class="fullscreen-btn" id="fullscreen-btn" title="Toggle Fullscreen">
+                    <button class="fullscreen-btn" id="camera-fullscreen-btn" title="Toggle Fullscreen">
                         <span class="fullscreen-icon">⛶</span>
                     </button>
                     <div class="camera-feed" id="camera-feed">
